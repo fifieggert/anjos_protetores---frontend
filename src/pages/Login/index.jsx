@@ -52,7 +52,7 @@ export default function Login() {
                     </div>
 
                     <div>
-                        <h2 className="login-heading">Bem-vinda de volta</h2>
+                        <h2 className="login-heading">Bem-vindo(a) de volta</h2>
                         <p className="login-subheading">Entre com sua conta para continuar.</p>
                     </div>
 
