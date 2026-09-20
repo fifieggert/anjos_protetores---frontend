@@ -4,10 +4,11 @@ import { PawPrint, Heart } from "lucide-react";
 import logo from "../../assets/logo.png";
 import "./style.css";
 
-const FILTROS = ["Todos", "Cão", "Gato"];
+const FILTROS = ["Todos", "Cão", "Gato"] as const;
+type Filtro = (typeof FILTROS)[number];
 
 export default function Publico() {
-    const [filtro, setFiltro] = useState("Todos");
+    const [filtro, setFiltro] = useState<Filtro>("Todos");
 
     return (
         <div className="publico-screen">
