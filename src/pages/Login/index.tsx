@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Lock, PawPrint } from "lucide-react";
+import { Mail, Lock, PawPrint, Eye, EyeOff } from "lucide-react";
 import logo from "../../assets/logo.png";
 import "./style.css";
 
@@ -8,13 +8,18 @@ export default function Login() {
     const [senha, setSenha] = useState("");
     const [lembrar, setLembrar] = useState(false);
     const [enviando, setEnviando] = useState(false);
+    const [mostrarSenha, setMostrarSenha] = useState(false);
+    const [erro, setErro] = useState("");
 
-    async function handleSubmit(event) {
+    async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
         setEnviando(true);
+        setErro("");
         try {
             // TODO: integrar com o endpoint de login do backend quando estiver disponível
-            console.log({ email, senha, lembrar });
+            console.log({ email, lembrar });
+        } catch {
+            setErro("Não foi possível entrar. Verifique seus dados e tente novamente.");
         } finally {
             setEnviando(false);
         }
@@ -69,6 +74,7 @@ export default function Login() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     autoComplete="email"
+                                    disabled={enviando}
                                 />
                             </div>
                         </label>
@@ -78,14 +84,23 @@ export default function Login() {
                             <div className="login-input-wrap">
                                 <Lock size={16} aria-hidden />
                                 <input
-                                    className="login-input"
-                                    type="password"
+                                    className="login-input login-input--senha"
+                                    type={mostrarSenha ? "text" : "password"}
                                     required
                                     placeholder="••••••••"
                                     value={senha}
                                     onChange={(e) => setSenha(e.target.value)}
                                     autoComplete="current-password"
+                                    disabled={enviando}
                                 />
+                                <button
+                                    type="button"
+                                    className="login-toggle-senha"
+                                    onClick={() => setMostrarSenha((v) => !v)}
+                                    aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                                >
+                                    {mostrarSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
                             </div>
                         </label>
                     </div>
@@ -103,6 +118,12 @@ export default function Login() {
                             Esqueci minha senha
                         </a>
                     </div>
+
+                    {erro && (
+                        <p className="login-error" role="alert">
+                            {erro}
+                        </p>
+                    )}
 
                     <button className="login-submit" type="submit" disabled={enviando}>
                         {enviando ? "Entrando..." : "Entrar"}
