@@ -1,0 +1,74 @@
+.adocoes-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.adocoes-title {
+    font-family: "Quicksand", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin: 0;
+    color: #172839;
+}
+
+.adocoes-subtitle {
+    margin: 0.25rem 0 0;
+    color: #657383;
+    font-size: 0.875rem;
+}
+
+.adocoes-content {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.adocoes-list {
+    background: #ffffff;
+    border: 1px solid #eaeef2;
+    border-radius: 16px;
+    min-height: 220px;
+}
+
+.adocoes-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1.5rem;
+    color: #657383;
+}
+
+.adocoes-empty svg {
+    color: #e5484d;
+}
+
+.adocoes-empty p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.adocoes-detail {
+    background: #ffffff;
+    border: 1px solid #eaeef2;
+    border-radius: 16px;
+    min-height: 220px;
+}
+
+.adocoes-detail--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    color: #657383;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 900px) {
+    .adocoes-content {
+        grid-template-columns: 1fr;
+    }
+}
