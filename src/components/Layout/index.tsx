@@ -8,7 +8,7 @@ const navItems = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, to: null },
     { key: "animais", label: "Animais", icon: PawPrint, to: "/animais" },
     { key: "doacoes", label: "Doações", icon: Gift, to: "/doacoes" },
-    { key: "adocoes", label: "Adoções", icon: Heart, to: null },
+    { key: "adocoes", label: "Adoções", icon: Heart, to: "/adocoes" },
     { key: "relatorios", label: "Relatórios", icon: BarChart3, to: null },
     { key: "area-publica", label: "Área Pública", icon: Globe, to: null },
 ];
