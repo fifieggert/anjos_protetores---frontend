@@ -1,15 +1,16 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { LayoutDashboard, PawPrint, Gift, Heart, BarChart3, Globe, LogOut, Bell, Search } from "lucide-react";
 import logo from "../../assets/logo.png";
 import "./style.css";
 
 const navItems = [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { key: "animais", label: "Animais", icon: PawPrint },
-    { key: "doacoes", label: "Doações", icon: Gift },
-    { key: "adocoes", label: "Adoções", icon: Heart },
-    { key: "relatorios", label: "Relatórios", icon: BarChart3 },
-    { key: "area-publica", label: "Área Pública", icon: Globe },
+    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, to: null },
+    { key: "animais", label: "Animais", icon: PawPrint, to: "/animais" },
+    { key: "doacoes", label: "Doações", icon: Gift, to: "/doacoes" },
+    { key: "adocoes", label: "Adoções", icon: Heart, to: null },
+    { key: "relatorios", label: "Relatórios", icon: BarChart3, to: null },
+    { key: "area-publica", label: "Área Pública", icon: Globe, to: null },
 ];
 
 interface LayoutProps {
@@ -30,12 +31,24 @@ export default function Layout({ active, children }: LayoutProps) {
                 </div>
 
                 <nav className="layout-nav">
-                    {navItems.map(({ key, label, icon: Icon }) => (
-                        <div key={key} className={`layout-nav-item${active === key ? " layout-nav-item--active" : ""}`}>
-                            <Icon size={18} aria-hidden />
-                            {label}
-                        </div>
-                    ))}
+                    {navItems.map(({ key, label, icon: Icon, to }) => {
+                        const className = `layout-nav-item${active === key ? " layout-nav-item--active" : ""}`;
+                        const content = (
+                            <>
+                                <Icon size={18} aria-hidden />
+                                {label}
+                            </>
+                        );
+                        return to ? (
+                            <Link key={key} to={to} className={className}>
+                                {content}
+                            </Link>
+                        ) : (
+                            <div key={key} className={className}>
+                                {content}
+                            </div>
+                        );
+                    })}
                 </nav>
 
                 <div className="layout-nav-item layout-nav-item--exit">

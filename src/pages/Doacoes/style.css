@@ -1,0 +1,123 @@
+.doacoes-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.doacoes-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.doacoes-title {
+    font-family: "Quicksand", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin: 0;
+    color: #172839;
+}
+
+.doacoes-subtitle {
+    margin: 0.25rem 0 0;
+    color: #657383;
+    font-size: 0.875rem;
+}
+
+.doacoes-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 24px;
+    background: #1dc5ae;
+    color: #fcfcfc;
+    font-weight: 700;
+    font-size: 0.875rem;
+    cursor: pointer;
+    box-shadow: 0 10px 15px -3px color-mix(in srgb, #1dc5ae 25%, transparent);
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.doacoes-add-btn:hover {
+    background: color-mix(in srgb, #1dc5ae 90%, black);
+}
+
+.doacoes-add-btn:active {
+    transform: scale(0.98);
+}
+
+.doacoes-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.doacoes-filter-pill {
+    padding: 0.5rem 1rem;
+    border: 1px solid #eaeef2;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #657383;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.doacoes-filter-pill:hover {
+    border-color: #00b4ed;
+}
+
+.doacoes-filter-pill--active {
+    background: #00b4ed;
+    border-color: #00b4ed;
+    color: #fcfcfc;
+}
+
+.doacoes-table-wrap {
+    background: #ffffff;
+    border: 1px solid #eaeef2;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.doacoes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.doacoes-table th {
+    padding: 0.875rem 1.25rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #657383;
+    background: #f7fbfd;
+    border-bottom: 1px solid #eaeef2;
+}
+
+.doacoes-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1.5rem;
+    color: #657383;
+}
+
+.doacoes-empty svg {
+    color: #1dc5ae;
+}
+
+.doacoes-empty p {
+    margin: 0;
+    font-size: 0.875rem;
+}

@@ -60,12 +60,22 @@
     color: #657383;
     cursor: default;
     user-select: none;
+    text-decoration: none;
 }
 
 .layout-nav-item--active {
     background: color-mix(in srgb, #00b4ed 12%, transparent);
     color: #00b4ed;
     font-weight: 600;
+}
+
+a.layout-nav-item {
+    cursor: pointer;
+}
+
+a.layout-nav-item:hover:not(.layout-nav-item--active) {
+    background: #f7fbfd;
+    color: #172839;
 }
 
 .layout-nav-item--exit {
