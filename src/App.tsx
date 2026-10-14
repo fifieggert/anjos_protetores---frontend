@@ -1,4 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import AppLayout from './components/Layout/AppLayout'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Animais from './pages/Animais/Animais'
@@ -11,20 +13,35 @@ import Publico from './pages/Publico/Publico'
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/publico" element={<Publico />} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/publico" element={<Publico />} />
 
-        <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/animais" element={<Animais />} />
-          <Route path="/doacoes" element={<Doacoes />} />
-          <Route path="/adocoes" element={<Adocoes />} />
-          <Route path="/relatorios" element={<Relatorios />} />
-        </Route>
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/animais" element={<Animais />} />
+            <Route path="/doacoes" element={<Doacoes />} />
+            <Route path="/adocoes" element={<Adocoes />} />
+            <Route
+              path="/relatorios"
+              element={
+                <ProtectedRoute perfisPermitidos={['ADMIN']}>
+                  <Relatorios />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

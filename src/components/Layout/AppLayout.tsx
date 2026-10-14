@@ -16,12 +16,14 @@ import {
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import logo from '../../assets/logo-anjos.png'
 import { cores, comOpacidade, fontes } from '../../theme/cores'
+import { useAuth } from '../../contexts/AuthContext'
+import { rotulosPerfil } from '../../types/auth'
 
 const { Header, Sider, Content } = Layout
 
 const LARGURA_SIDEBAR = 256
 
-const menuItems: MenuProps['items'] = [
+const menuItems: NonNullable<MenuProps['items']> = [
   { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/animais', icon: <HeartOutlined />, label: 'Animais' },
   { key: '/doacoes', icon: <InboxOutlined />, label: 'Doações' },
@@ -30,8 +32,8 @@ const menuItems: MenuProps['items'] = [
   { key: '/publico', icon: <GlobalOutlined />, label: 'Área Pública' },
 ]
 
-// TODO: substituir pelos dados do usuário logado (retorno do login).
-const usuario = { nome: 'Usuário', perfil: 'Perfil' }
+// Itens do menu visíveis só para ADMIN (as rotas também são protegidas no App.tsx).
+const ROTAS_SOMENTE_ADMIN = ['/relatorios']
 
 function iniciais(nome: string) {
   const partes = nome.trim().split(/\s+/)
@@ -47,9 +49,15 @@ interface SidebarProps {
 function Sidebar({ onNavegar }: SidebarProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { usuario, logout } = useAuth()
 
-  const selectedKey = menuItems
-    ?.map((item) => String(item?.key))
+  const itens =
+    usuario?.perfil === 'ADMIN'
+      ? menuItems
+      : menuItems.filter((item) => !ROTAS_SOMENTE_ADMIN.includes(String(item?.key)))
+
+  const selectedKey = itens
+    .map((item) => String(item?.key))
     .find((key) => pathname.startsWith(key))
 
   return (
@@ -76,7 +84,7 @@ function Sidebar({ onNavegar }: SidebarProps) {
 
       <Menu
         mode="inline"
-        items={menuItems}
+        items={itens}
         selectedKeys={selectedKey ? [selectedKey] : []}
         onClick={({ key }) => {
           navigate(key)
@@ -111,11 +119,14 @@ function Sidebar({ onNavegar }: SidebarProps) {
         </Typography.Text>
       </div>
 
-      {/* TODO: implementar logout */}
       <Button
         type="text"
         block
         icon={<LogoutOutlined />}
+        onClick={() => {
+          logout()
+          navigate('/login', { replace: true })
+        }}
         style={{
           marginTop: 8,
           height: 44,
@@ -137,6 +148,11 @@ function AppLayout() {
   const desktop = !!telas.lg
   const [menuAberto, setMenuAberto] = useState(false)
   const espacamento = telas.md ? 32 : 16
+  const { usuario } = useAuth()
+
+  // O nome vem da resposta do login; "Usuário" quando o backend não o envia.
+  const nome = usuario?.nome ?? 'Usuário'
+  const perfil = usuario ? rotulosPerfil[usuario.perfil] : ''
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -222,8 +238,8 @@ function AppLayout() {
 
             {telas.sm && (
               <div style={{ textAlign: 'right', lineHeight: 1.25 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: cores.texto }}>{usuario.nome}</div>
-                <div style={{ fontSize: 12, color: cores.textoSecundario }}>{usuario.perfil}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: cores.texto }}>{nome}</div>
+                <div style={{ fontSize: 12, color: cores.textoSecundario }}>{perfil}</div>
               </div>
             )}
 
@@ -236,7 +252,7 @@ function AppLayout() {
                 background: comOpacidade(cores.teal, 0.2),
               }}
             >
-              {iniciais(usuario.nome)}
+              {iniciais(nome)}
             </Avatar>
           </div>
         </Header>
