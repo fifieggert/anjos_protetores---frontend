@@ -22,6 +22,8 @@ import axios from 'axios'
 import { useAuth } from '../../contexts/AuthContext'
 import { atualizarAnimal, criarAnimal, excluirAnimal, listarAnimais } from '../../services/animais'
 import { cores, comOpacidade } from '../../theme/cores'
+import { errosDosCampos, mensagemDeErro } from '../../utils/erros'
+import { normalizar, rotulo } from '../../utils/texto'
 import {
   ESPECIES,
   PORTES,
@@ -70,34 +72,6 @@ const CAMPOS_OPCIONAIS = ['raca', 'idade', 'fotoUrl', 'descricao'] as const
 const opcoesEspecie = ESPECIES.map((valor) => ({ value: valor, label: rotulosEspecie[valor] }))
 const opcoesPorte = PORTES.map((valor) => ({ value: valor, label: rotulosPorte[valor] }))
 const opcoesStatus = STATUS_ANIMAL.map((valor) => ({ value: valor, label: rotulosStatusAnimal[valor] }))
-
-// Rótulo em português; se a API mandar um valor novo, mostra o próprio valor.
-function rotulo<T extends string>(rotulos: Record<T, string>, valor: T | null | undefined) {
-  if (!valor) return '-'
-  return rotulos[valor] ?? valor
-}
-
-// Minúsculas e sem acento, para a busca local.
-function normalizar(texto: string) {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-}
-
-function dadosDoErro(erro: unknown) {
-  if (!axios.isAxiosError(erro)) return null
-  const data: unknown = erro.response?.data
-  return data && typeof data === 'object' ? (data as { error?: unknown; campos?: unknown }) : null
-}
-
-function mensagemDeErro(erro: unknown, generica: string) {
-  if (axios.isAxiosError(erro) && !erro.response) {
-    return 'Não foi possível conectar ao servidor. Tente novamente.'
-  }
-  const mensagem = dadosDoErro(erro)?.error
-  return typeof mensagem === 'string' && mensagem.trim() !== '' ? mensagem : generica
-}
 
 function urlValida(valor: string) {
   try {
@@ -214,16 +188,7 @@ function Animais() {
 
   // 400 com "campos": mostra cada mensagem no campo correspondente do formulário.
   function aplicarErrosDosCampos(erro: unknown) {
-    if (!axios.isAxiosError(erro) || erro.response?.status !== 400) return
-    const campos = dadosDoErro(erro)?.campos
-    if (!campos || typeof campos !== 'object') return
-
-    const doFormulario = Object.entries(campos as Record<string, unknown>).filter(
-      ([campo, msg]) => CAMPOS_FORM.includes(campo as keyof CamposAnimal) && typeof msg === 'string',
-    )
-    form.setFields(
-      doFormulario.map(([campo, msg]) => ({ name: campo as keyof CamposAnimal, errors: [msg as string] })),
-    )
+    form.setFields(errosDosCampos(erro, CAMPOS_FORM))
   }
 
   async function salvar(valores: CamposAnimal) {
