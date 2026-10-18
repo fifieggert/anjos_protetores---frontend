@@ -32,6 +32,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   excluirDoacao,
@@ -43,7 +44,7 @@ import {
 } from '../../services/estoque'
 import { cores, comOpacidade } from '../../theme/cores'
 import { CATEGORIAS, rotulosCategoria } from '../../types/estoque'
-import type { CategoriaItem, Doacao, ItemEstoque, SaidaEstoque } from '../../types/estoque'
+import type { CategoriaItem, Doacao, EstadoTelaEstoque, ItemEstoque, SaidaEstoque } from '../../types/estoque'
 import { mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { formatarData } from '../../utils/datas'
 import { normalizar, rotulo } from '../../utils/texto'
@@ -159,6 +160,8 @@ function Doacoes() {
   const { message } = App.useApp()
   const { usuario } = useAuth()
   const ehAdmin = usuario?.perfil === 'ADMIN'
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const [itens, setItens] = useState<ItemEstoque[]>([])
   const [doacoes, setDoacoes] = useState<Doacao[]>([])
@@ -258,6 +261,19 @@ function Doacoes() {
     setFiltroSituacao('BAIXO')
     setPaginaItens(1)
   }
+
+  // Vindo do card "Estoque baixo" do menu: aplica o filtro uma vez por navegação (ajustando o
+  // estado na renderização) e depois limpa o estado da navegação, para o filtro não voltar
+  // sozinho num F5 ou ao usar o botão Voltar.
+  const verEstoqueBaixo = (location.state as EstadoTelaEstoque | null)?.verEstoqueBaixo === true
+  const [navegacaoAplicada, setNavegacaoAplicada] = useState<string | null>(null)
+  if (verEstoqueBaixo && navegacaoAplicada !== location.key) {
+    setNavegacaoAplicada(location.key)
+    verItensBaixos()
+  }
+  useEffect(() => {
+    if (verEstoqueBaixo) navigate(location.pathname, { replace: true, state: null })
+  }, [verEstoqueBaixo, location.pathname, navigate])
 
   // Salvamentos vindos dos modais
 

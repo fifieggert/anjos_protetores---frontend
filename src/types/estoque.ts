@@ -79,3 +79,8 @@ export interface DadosSaida {
   finalidade?: string
   dataSaida?: string
 }
+
+// Estado de navegação aceito pela tela de Doações e Estoque (ex.: card "Estoque baixo" do menu).
+export interface EstadoTelaEstoque {
+  verEstoqueBaixo?: boolean
+}

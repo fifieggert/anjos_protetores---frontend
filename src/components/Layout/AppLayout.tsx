@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Avatar, Badge, Button, Drawer, Grid, Input, Layout, Menu, Typography } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   BarChartOutlined,
   BellOutlined,
+  CheckCircleOutlined,
   DashboardOutlined,
   GlobalOutlined,
   HeartOutlined,
@@ -11,13 +12,17 @@ import {
   InboxOutlined,
   LogoutOutlined,
   MenuOutlined,
+  RightOutlined,
   SearchOutlined,
+  WarningOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import logo from '../../assets/logo-anjos.png'
 import { cores, comOpacidade, fontes } from '../../theme/cores'
 import { useAuth } from '../../contexts/AuthContext'
 import { rotulosPerfil } from '../../types/auth'
+import { aoAlterarEstoque, listarAlertas } from '../../services/estoque'
+import type { EstadoTelaEstoque, ItemEstoque } from '../../types/estoque'
 
 const { Header, Sider, Content } = Layout
 
@@ -42,11 +47,129 @@ function iniciais(nome: string) {
   return (primeira + ultima).toUpperCase()
 }
 
+// Quantos nomes de itens o card "Estoque baixo" mostra.
+const ITENS_NO_CARD = 3
+
+// Busca os itens abaixo do mínimo ao montar o layout e de novo a cada mudança no estoque.
+// null = carregando ou falhou: o card fica escondido e o menu segue funcionando.
+function useAlertasEstoque() {
+  const [alertas, setAlertas] = useState<ItemEstoque[] | null>(null)
+
+  useEffect(() => {
+    let ativo = true
+    let ultimaBusca = 0
+
+    function buscar() {
+      const busca = ++ultimaBusca
+      listarAlertas()
+        .then((lista) => {
+          // Ignora respostas de buscas antigas que chegaram depois de uma mais nova.
+          if (ativo && busca === ultimaBusca) setAlertas(Array.isArray(lista) ? lista : null)
+        })
+        .catch(() => {
+          if (ativo && busca === ultimaBusca) setAlertas(null)
+        })
+    }
+
+    buscar()
+    const cancelar = aoAlterarEstoque(buscar)
+    return () => {
+      ativo = false
+      cancelar()
+    }
+  }, [])
+
+  return alertas
+}
+
+// Mais crítico = menor fração do mínimo (esgotados primeiro).
+function maisCriticos(itens: ItemEstoque[]) {
+  return [...itens]
+    .sort((a, b) => a.quantidadeAtual / a.quantidadeMinima - b.quantidadeAtual / b.quantidadeMinima)
+    .slice(0, ITENS_NO_CARD)
+}
+
+interface CardEstoqueBaixoProps {
+  alertas: ItemEstoque[]
+  onClick: () => void
+}
+
+function CardEstoqueBaixo({ alertas, onClick }: CardEstoqueBaixoProps) {
+  const temAlertas = alertas.length > 0
+  const cor = temAlertas ? cores.laranja : cores.sucesso
+  const criticos = maisCriticos(alertas)
+  const restantes = alertas.length - criticos.length
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={temAlertas ? 'Ver itens com estoque baixo' : 'Ver estoque'}
+      onClick={onClick}
+      onKeyDown={(evento) => {
+        if (evento.key === 'Enter' || evento.key === ' ') {
+          evento.preventDefault()
+          onClick()
+        }
+      }}
+      style={{
+        marginTop: 16,
+        padding: 16,
+        borderRadius: 16,
+        cursor: 'pointer',
+        background: comOpacidade(cor, 0.1),
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {temAlertas ? <WarningOutlined style={{ color: cor }} /> : <CheckCircleOutlined style={{ color: cor }} />}
+        <Typography.Text
+          style={{
+            flex: 1,
+            color: cor,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: 0.5,
+            textTransform: 'uppercase',
+          }}
+        >
+          {temAlertas ? 'Estoque baixo' : 'Estoque em dia'}
+        </Typography.Text>
+        <RightOutlined style={{ color: cor, fontSize: 10 }} />
+      </div>
+
+      {temAlertas ? (
+        <>
+          <Typography.Text strong style={{ display: 'block', marginTop: 4, fontSize: 13 }}>
+            {alertas.length === 1 ? '1 item abaixo do mínimo' : `${alertas.length} itens abaixo do mínimo`}
+          </Typography.Text>
+          <ul style={{ margin: '4px 0 0', paddingInlineStart: 18, fontSize: 13, color: cores.textoSecundario }}>
+            {criticos.map((item) => (
+              <li key={item.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {item.nomeItem} ({item.quantidadeAtual === 0 ? 'esgotado' : `${item.quantidadeAtual}/${item.quantidadeMinima}`})
+              </li>
+            ))}
+          </ul>
+          {restantes > 0 && (
+            <Typography.Text type="secondary" style={{ display: 'block', marginTop: 2, fontSize: 12 }}>
+              e mais {restantes}
+            </Typography.Text>
+          )}
+        </>
+      ) : (
+        <Typography.Text style={{ display: 'block', marginTop: 4, fontSize: 13 }}>
+          Nenhum item abaixo do mínimo.
+        </Typography.Text>
+      )}
+    </div>
+  )
+}
+
 interface SidebarProps {
+  alertas: ItemEstoque[] | null
   onNavegar?: () => void
 }
 
-function Sidebar({ onNavegar }: SidebarProps) {
+function Sidebar({ alertas, onNavegar }: SidebarProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { usuario, logout } = useAuth()
@@ -93,31 +216,16 @@ function Sidebar({ onNavegar }: SidebarProps) {
         style={{ flex: 1, overflowY: 'auto', borderInlineEnd: 'none', fontWeight: 500 }}
       />
 
-      <div
-        style={{
-          marginTop: 16,
-          padding: 16,
-          borderRadius: 16,
-          background: comOpacidade(cores.laranja, 0.1),
-        }}
-      >
-        <Typography.Text
-          style={{
-            display: 'block',
-            color: cores.laranja,
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: 0.5,
-            textTransform: 'uppercase',
+      {alertas && (
+        <CardEstoqueBaixo
+          alertas={alertas}
+          onClick={() => {
+            const estado: EstadoTelaEstoque = { verEstoqueBaixo: alertas.length > 0 }
+            navigate('/doacoes', { state: estado })
+            onNavegar?.()
           }}
-        >
-          Estoque baixo
-        </Typography.Text>
-        {/* TODO: buscar os itens com estoque baixo na API */}
-        <Typography.Text style={{ display: 'block', marginTop: 4, fontSize: 13 }}>
-          Ração para filhotes está acabando.
-        </Typography.Text>
-      </div>
+        />
+      )}
 
       <Button
         type="text"
@@ -149,6 +257,8 @@ function AppLayout() {
   const [menuAberto, setMenuAberto] = useState(false)
   const espacamento = telas.md ? 32 : 16
   const { usuario } = useAuth()
+  // Buscado aqui (e não no Sidebar) porque no celular o Drawer só monta o menu quando abre.
+  const alertasEstoque = useAlertasEstoque()
 
   // O nome vem da resposta do login; "Usuário" quando o backend não o envia.
   const nome = usuario?.nome ?? 'Usuário'
@@ -169,7 +279,7 @@ function AppLayout() {
             borderInlineEnd: `1px solid ${cores.borda}`,
           }}
         >
-          <Sidebar />
+          <Sidebar alertas={alertasEstoque} />
         </Sider>
       ) : (
         <Drawer
@@ -180,7 +290,7 @@ function AppLayout() {
           closable={false}
           styles={{ body: { padding: 0 } }}
         >
-          <Sidebar onNavegar={() => setMenuAberto(false)} />
+          <Sidebar alertas={alertasEstoque} onNavegar={() => setMenuAberto(false)} />
         </Drawer>
       )}
 
