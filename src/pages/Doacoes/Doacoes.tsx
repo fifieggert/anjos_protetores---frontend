@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   Alert,
   App,
@@ -33,6 +32,7 @@ import {
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useLocation, useNavigate } from 'react-router-dom'
+import Indicador from '../../components/Indicador'
 import { useAuth } from '../../contexts/AuthContext'
 import {
   excluirDoacao,
@@ -42,7 +42,7 @@ import {
   listarItens,
   listarSaidas,
 } from '../../services/estoque'
-import { cores, comOpacidade } from '../../theme/cores'
+import { cores } from '../../theme/cores'
 import { CATEGORIAS, rotulosCategoria } from '../../types/estoque'
 import type { CategoriaItem, Doacao, EstadoTelaEstoque, ItemEstoque, SaidaEstoque } from '../../types/estoque'
 import { mensagemDeErro, statusDoErro } from '../../utils/erros'
@@ -107,45 +107,6 @@ function TagCategoria({ categoria }: { categoria: CategoriaItem | undefined }) {
   if (!categoria) return null
   return (
     <Tag color={coresCategoria[categoria] ?? cores.textoSecundario}>{rotulo(rotulosCategoria, categoria)}</Tag>
-  )
-}
-
-interface IndicadorProps {
-  titulo: string
-  valor: number
-  icone: ReactNode
-  cor: string
-}
-
-function Indicador({ titulo, valor, icone, cor }: IndicadorProps) {
-  return (
-    <Card style={{ height: '100%' }} styles={{ body: { padding: 20 } }}>
-      <Flex align="center" gap={16}>
-        <Flex
-          align="center"
-          justify="center"
-          style={{
-            width: 48,
-            height: 48,
-            flexShrink: 0,
-            borderRadius: 14,
-            fontSize: 22,
-            color: cor,
-            background: comOpacidade(cor, 0.12),
-          }}
-        >
-          {icone}
-        </Flex>
-        <div style={{ minWidth: 0 }}>
-          <Typography.Text type="secondary" style={{ display: 'block', fontSize: 13 }}>
-            {titulo}
-          </Typography.Text>
-          <Typography.Text strong style={{ fontSize: 26, lineHeight: 1.2 }}>
-            {valor.toLocaleString('pt-BR')}
-          </Typography.Text>
-        </div>
-      </Flex>
-    </Card>
   )
 }
 

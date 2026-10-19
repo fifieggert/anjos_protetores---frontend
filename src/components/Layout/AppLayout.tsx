@@ -38,7 +38,7 @@ const menuItems: NonNullable<MenuProps['items']> = [
 ]
 
 // Itens do menu visíveis só para ADMIN (as rotas também são protegidas no App.tsx).
-const ROTAS_SOMENTE_ADMIN = ['/relatorios']
+const ROTAS_SOMENTE_ADMIN = ['/adocoes', '/relatorios']
 
 function iniciais(nome: string) {
   const partes = nome.trim().split(/\s+/)
