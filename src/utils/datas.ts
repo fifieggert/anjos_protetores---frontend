@@ -37,3 +37,24 @@ export function dataDaEdicao(dia: Dayjs | null | undefined, originalIso: string)
   if (!dia || (original.isValid() && dia.isSame(original, 'day'))) return undefined
   return dataParaApi(dia, original.isValid() ? original : dayjs())
 }
+
+// Datas "só dia" (ex.: castração, revacinação), sem hora que importe.
+// Envio: meio-dia local. Em qualquer fuso do Brasil isso cai no mesmo dia em UTC,
+// então o dia não muda ao ser gravado nem ao ser lido de volta.
+export function diaParaApi(dia: Dayjs) {
+  return dia.hour(12).minute(0).second(0).millisecond(0).toISOString()
+}
+
+// Leitura: usa só o AAAA-MM-DD do valor gravado, como dia local. Assim tanto o
+// meio-dia enviado por diaParaApi quanto uma data gravada à meia-noite UTC
+// (ex.: "2026-01-10" enviado direto à API) aparecem no dia certo, não no anterior.
+export function diaDaApi(iso: string | null | undefined) {
+  if (!iso) return null
+  // o dayjs lê "AAAA-MM-DD" (sem hora nem fuso) como dia local
+  const dia = dayjs(iso.slice(0, 10))
+  return dia.isValid() ? dia : null
+}
+
+export function formatarDia(iso: string | null | undefined) {
+  return diaDaApi(iso)?.format(FORMATO_DATA) ?? '-'
+}
