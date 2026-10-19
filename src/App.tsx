@@ -28,7 +28,14 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/animais" element={<Animais />} />
             <Route path="/doacoes" element={<Doacoes />} />
-            <Route path="/adocoes" element={<Adocoes />} />
+            <Route
+              path="/adocoes"
+              element={
+                <ProtectedRoute perfisPermitidos={['ADMIN']}>
+                  <Adocoes />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/relatorios"
               element={

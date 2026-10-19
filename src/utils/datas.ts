@@ -58,3 +58,14 @@ export function diaDaApi(iso: string | null | undefined) {
 export function formatarDia(iso: string | null | undefined) {
   return diaDaApi(iso)?.format(FORMATO_DATA) ?? '-'
 }
+
+// Dias de calendário desde a data (0 = hoje).
+export function diasDesde(iso: string) {
+  const data = dayjs(iso)
+  return data.isValid() ? Math.max(0, dayjs().startOf('day').diff(data.startOf('day'), 'day')) : 0
+}
+
+export function textoDiasDesde(dias: number) {
+  if (dias === 0) return 'hoje'
+  return dias === 1 ? 'há 1 dia' : `há ${dias} dias`
+}
