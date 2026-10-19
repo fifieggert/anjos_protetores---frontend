@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  Alert,
   App,
   Avatar,
   Button,
   ConfigProvider,
+  DatePicker,
   Flex,
   Form,
   Input,
@@ -11,28 +13,43 @@ import {
   Modal,
   Popconfirm,
   Select,
+  Switch,
   Table,
   Tag,
   Tooltip,
   Typography,
 } from 'antd'
 import type { TableColumnsType } from 'antd'
-import { DeleteOutlined, EditOutlined, HeartOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import axios from 'axios'
+import {
+  CheckCircleFilled,
+  DeleteOutlined,
+  EditOutlined,
+  HeartOutlined,
+  ManOutlined,
+  MinusCircleOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  WomanOutlined,
+} from '@ant-design/icons'
+import type { Dayjs } from 'dayjs'
 import { useAuth } from '../../contexts/AuthContext'
 import { atualizarAnimal, criarAnimal, excluirAnimal, listarAnimais } from '../../services/animais'
 import { cores, comOpacidade } from '../../theme/cores'
-import { errosDosCampos, mensagemDeErro } from '../../utils/erros'
+import { errosDosCampos, mensagemDeErro, statusDoErro } from '../../utils/erros'
+import { diaDaApi, diaFuturo, diaParaApi, formatarDia, FORMATO_DATA } from '../../utils/datas'
 import { normalizar, rotulo } from '../../utils/texto'
 import {
   ESPECIES,
   PORTES,
+  SEXOS,
   STATUS_ANIMAL,
+  STATUS_EDITAVEIS,
   rotulosEspecie,
   rotulosPorte,
+  rotulosSexo,
   rotulosStatusAnimal,
 } from '../../types/animal'
-import type { Animal, DadosAnimal, Especie, Porte, StatusAnimal } from '../../types/animal'
+import type { Animal, DadosAnimal, Especie, Porte, Sexo, StatusAnimal, StatusEditavel } from '../../types/animal'
 
 // Limite das colunas de texto no banco (VARCHAR(191)).
 const MAX_TEXTO = 191
@@ -42,7 +59,8 @@ const TODOS = 'TODOS'
 const coresStatus: Record<StatusAnimal, string> = {
   DISPONIVEL: cores.sucesso,
   EM_TRATAMENTO: cores.primaria,
-  ADOTADO: cores.textoSecundario,
+  EM_ESPERA: cores.laranja,
+  ADOTADO: cores.teal,
 }
 
 interface CamposAnimal {
@@ -51,9 +69,16 @@ interface CamposAnimal {
   porte: Porte
   raca?: string
   idade?: number | null
+  // Na edição de um animal reservado, mostra EM_ESPERA (campo desabilitado, nunca enviado).
   status?: StatusAnimal
   fotoUrl?: string
   descricao?: string
+  sexo?: Sexo
+  castrado: boolean
+  dataCastracao?: Dayjs | null
+  vacinado: boolean
+  dosesVacina?: number | null
+  dataRevacinacao?: Dayjs | null
 }
 
 const CAMPOS_FORM: readonly (keyof CamposAnimal)[] = [
@@ -65,13 +90,39 @@ const CAMPOS_FORM: readonly (keyof CamposAnimal)[] = [
   'status',
   'fotoUrl',
   'descricao',
+  'sexo',
+  'castrado',
+  'dataCastracao',
+  'vacinado',
+  'dosesVacina',
+  'dataRevacinacao',
 ]
 
-const CAMPOS_OPCIONAIS = ['raca', 'idade', 'fotoUrl', 'descricao'] as const
+const CAMPOS_OPCIONAIS = ['raca', 'idade', 'fotoUrl', 'descricao', 'sexo', 'dosesVacina'] as const
+
+const VALORES_INICIAIS: Partial<CamposAnimal> = { castrado: false, vacinado: false }
 
 const opcoesEspecie = ESPECIES.map((valor) => ({ value: valor, label: rotulosEspecie[valor] }))
 const opcoesPorte = PORTES.map((valor) => ({ value: valor, label: rotulosPorte[valor] }))
+const opcoesSexo = SEXOS.map((valor) => ({ value: valor, label: rotulosSexo[valor] }))
+// Filtro: todos os status. Formulário: só os que o cadastro/edição podem enviar.
 const opcoesStatus = STATUS_ANIMAL.map((valor) => ({ value: valor, label: rotulosStatusAnimal[valor] }))
+const opcoesStatusEditavel = STATUS_EDITAVEIS.map((valor) => ({ value: valor, label: rotulosStatusAnimal[valor] }))
+const opcaoReservado = [{ value: 'EM_ESPERA', label: rotulosStatusAnimal.EM_ESPERA }]
+
+function ehStatusEditavel(status: StatusAnimal): status is StatusEditavel {
+  return (STATUS_EDITAVEIS as readonly StatusAnimal[]).includes(status)
+}
+
+// Texto do indicador de vacina na tabela (ex.: "2 doses · revacinação em 01/03/2027").
+function detalhesVacina(animal: Animal) {
+  const partes: string[] = []
+  if (typeof animal.dosesVacina === 'number') {
+    partes.push(`${animal.dosesVacina} ${animal.dosesVacina === 1 ? 'dose' : 'doses'}`)
+  }
+  if (animal.dataRevacinacao) partes.push(`revacinação em ${formatarDia(animal.dataRevacinacao)}`)
+  return partes.join(' · ')
+}
 
 function urlValida(valor: string) {
   try {
@@ -82,6 +133,13 @@ function urlValida(valor: string) {
   }
 }
 
+// Data "só dia": enviada quando mudou; null na edição só se o animal tinha data (para limpar).
+function dataDoDia(dia: Dayjs | null | undefined, originalIso: string | null | undefined) {
+  const original = diaDaApi(originalIso)
+  if (!dia) return original ? null : undefined
+  return original && dia.isSame(original, 'day') ? undefined : diaParaApi(dia)
+}
+
 // Monta o corpo só com os campos aceitos pela API. Opcionais vazios são omitidos
 // no cadastro; na edição vão como null apenas se o animal tinha valor (para limpar).
 function montarCorpo(valores: CamposAnimal, editando: Animal | null): DadosAnimal {
@@ -89,10 +147,27 @@ function montarCorpo(valores: CamposAnimal, editando: Animal | null): DadosAnima
     nome: valores.nome.trim(),
     especie: valores.especie,
     porte: valores.porte,
+    castrado: valores.castrado,
+    vacinado: valores.vacinado,
   }
-  if (editando && valores.status) corpo.status = valores.status
+
+  // Nunca envia EM_ESPERA nem ADOTADO; o mesmo status atual também é omitido.
+  if (valores.status && ehStatusEditavel(valores.status) && valores.status !== editando?.status) {
+    corpo.status = valores.status
+  }
+
+  // Desligados, castrado/vacinado já fazem o servidor limpar datas e doses: não envia os dependentes.
+  if (valores.castrado) {
+    const dataCastracao = dataDoDia(valores.dataCastracao, editando?.dataCastracao)
+    if (dataCastracao !== undefined) corpo.dataCastracao = dataCastracao
+  }
+  if (valores.vacinado) {
+    const dataRevacinacao = dataDoDia(valores.dataRevacinacao, editando?.dataRevacinacao)
+    if (dataRevacinacao !== undefined) corpo.dataRevacinacao = dataRevacinacao
+  }
 
   for (const campo of CAMPOS_OPCIONAIS) {
+    if (campo === 'dosesVacina' && !valores.vacinado) continue
     const bruto = valores[campo]
     const valor = typeof bruto === 'string' ? bruto.trim() : bruto
     const vazio = valor === undefined || valor === null || valor === ''
@@ -111,6 +186,8 @@ function Animais() {
   const { usuario } = useAuth()
   const ehAdmin = usuario?.perfil === 'ADMIN'
   const [form] = Form.useForm<CamposAnimal>()
+  const castrado = Form.useWatch('castrado', form)
+  const vacinado = Form.useWatch('vacinado', form)
 
   const [animais, setAnimais] = useState<Animal[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -162,6 +239,8 @@ function Animais() {
   function abrirCadastro() {
     setEditando(null)
     form.resetFields()
+    // fora dos initialValues para a edição de um animal adotado começar com o status vazio
+    form.setFieldsValue({ status: 'DISPONIVEL' })
     setModalAberto(true)
   }
 
@@ -174,9 +253,16 @@ function Animais() {
       porte: animal.porte,
       raca: animal.raca ?? undefined,
       idade: animal.idade ?? null,
-      status: animal.status,
+      // Adotado: o campo começa vazio e só é preenchido para registrar uma devolução.
+      status: animal.status === 'ADOTADO' ? undefined : animal.status,
       fotoUrl: animal.fotoUrl ?? undefined,
       descricao: animal.descricao ?? undefined,
+      sexo: animal.sexo ?? undefined,
+      castrado: animal.castrado ?? false,
+      dataCastracao: diaDaApi(animal.dataCastracao),
+      vacinado: animal.vacinado ?? false,
+      dosesVacina: animal.dosesVacina ?? null,
+      dataRevacinacao: diaDaApi(animal.dataRevacinacao),
     })
     setModalAberto(true)
   }
@@ -184,11 +270,6 @@ function Animais() {
   function fecharModal() {
     if (salvando) return
     setModalAberto(false)
-  }
-
-  // 400 com "campos": mostra cada mensagem no campo correspondente do formulário.
-  function aplicarErrosDosCampos(erro: unknown) {
-    form.setFields(errosDosCampos(erro, CAMPOS_FORM))
   }
 
   async function salvar(valores: CamposAnimal) {
@@ -206,9 +287,18 @@ function Animais() {
       }
       setModalAberto(false)
     } catch (e) {
-      aplicarErrosDosCampos(e)
-      message.error(mensagemDeErro(e, 'Não foi possível salvar o animal. Tente novamente.'))
-      if (axios.isAxiosError(e) && e.response?.status === 404) {
+      // 400 com "campos": cada mensagem vai para o seu campo; o resto vira mensagem geral.
+      const errosCampos = errosDosCampos(e, CAMPOS_FORM)
+      form.setFields(errosCampos)
+      message.error(
+        errosCampos.length > 0
+          ? 'Confira os campos destacados.'
+          : mensagemDeErro(e, 'Não foi possível salvar o animal. Tente novamente.'),
+      )
+      // 404: o animal foi excluído. 409: o status mudou por outro caminho (ex.: alguém
+      // registrou interesse e ele ficou reservado). Nos dois casos, recarrega a lista.
+      const status = statusDoErro(e)
+      if (status === 404 || status === 409) {
         setModalAberto(false)
         carregar()
       }
@@ -225,7 +315,7 @@ function Animais() {
       message.success('Animal excluído.')
     } catch (e) {
       message.error(mensagemDeErro(e, 'Não foi possível excluir o animal. Tente novamente.'))
-      if (axios.isAxiosError(e) && e.response?.status === 404) carregar()
+      if (statusDoErro(e) === 404) carregar()
     } finally {
       setExcluindoId(null)
     }
@@ -259,6 +349,24 @@ function Animais() {
       render: (especie: Especie) => rotulo(rotulosEspecie, especie),
     },
     {
+      title: 'Sexo',
+      dataIndex: 'sexo',
+      key: 'sexo',
+      render: (sexo?: Sexo | null) =>
+        sexo ? (
+          <Flex gap={6} align="center">
+            {sexo === 'MACHO' ? (
+              <ManOutlined aria-hidden style={{ color: cores.primaria }} />
+            ) : (
+              <WomanOutlined aria-hidden style={{ color: cores.teal }} />
+            )}
+            {rotulo(rotulosSexo, sexo)}
+          </Flex>
+        ) : (
+          '-'
+        ),
+    },
+    {
       title: 'Raça',
       dataIndex: 'raca',
       key: 'raca',
@@ -276,6 +384,39 @@ function Animais() {
       dataIndex: 'porte',
       key: 'porte',
       render: (porte: Porte) => rotulo(rotulosPorte, porte),
+    },
+    {
+      title: 'Saúde',
+      key: 'saude',
+      render: (_, animal) => {
+        const vacina = detalhesVacina(animal)
+        return (
+          <Flex vertical gap={2} style={{ fontSize: 13 }}>
+            <Tooltip
+              title={animal.castrado && animal.dataCastracao ? `Castrado em ${formatarDia(animal.dataCastracao)}` : undefined}
+            >
+              <span style={{ color: animal.castrado ? cores.texto : cores.textoSecundario }}>
+                {animal.castrado ? (
+                  <CheckCircleFilled aria-hidden style={{ color: cores.sucesso, marginRight: 6 }} />
+                ) : (
+                  <MinusCircleOutlined aria-hidden style={{ marginRight: 6 }} />
+                )}
+                {animal.castrado ? 'Castrado' : 'Não castrado'}
+              </span>
+            </Tooltip>
+            <Tooltip title={animal.vacinado && vacina ? vacina : undefined}>
+              <span style={{ color: animal.vacinado ? cores.texto : cores.textoSecundario }}>
+                {animal.vacinado ? (
+                  <CheckCircleFilled aria-hidden style={{ color: cores.sucesso, marginRight: 6 }} />
+                ) : (
+                  <MinusCircleOutlined aria-hidden style={{ marginRight: 6 }} />
+                )}
+                {animal.vacinado ? 'Vacinado' : 'Não vacinado'}
+              </span>
+            </Tooltip>
+          </Flex>
+        )
+      },
     },
     {
       title: 'Status',
@@ -399,7 +540,13 @@ function Animais() {
         maskClosable={!salvando}
         forceRender
       >
-        <Form<CamposAnimal> form={form} layout="vertical" onFinish={salvar} disabled={salvando}>
+        <Form<CamposAnimal>
+          form={form}
+          layout="vertical"
+          onFinish={salvar}
+          disabled={salvando}
+          initialValues={VALORES_INICIAIS}
+        >
           <Form.Item
             label="Nome"
             name="nome"
@@ -452,11 +599,87 @@ function Animais() {
             </Form.Item>
           </Flex>
 
-          {editando && (
+          {editando?.status === 'EM_ESPERA' ? (
+            <Form.Item
+              label="Status"
+              name="status"
+              extra="Animal reservado: conclua ou cancele o interesse na tela de Adoções."
+            >
+              <Select disabled options={opcaoReservado} />
+            </Form.Item>
+          ) : editando?.status === 'ADOTADO' ? (
+            <>
+              <Alert
+                type="warning"
+                showIcon
+                title="Animal adotado. Use isto só para registrar uma devolução."
+                style={{ marginBottom: 16 }}
+              />
+              <Form.Item label="Status" name="status">
+                <Select allowClear placeholder="Adotado (sem alteração)" options={opcoesStatusEditavel} />
+              </Form.Item>
+            </>
+          ) : (
             <Form.Item label="Status" name="status" rules={[{ required: true, message: 'Selecione o status.' }]}>
-              <Select options={opcoesStatus} />
+              <Select options={opcoesStatusEditavel} />
             </Form.Item>
           )}
+
+          <Form.Item label="Sexo" name="sexo">
+            <Select allowClear placeholder="Não informado" options={opcoesSexo} />
+          </Form.Item>
+
+          <Flex gap={16} wrap>
+            <Form.Item label="Castrado" name="castrado" valuePropName="checked" style={{ flex: '0 0 auto' }}>
+              <Switch
+                checkedChildren="Sim"
+                unCheckedChildren="Não"
+                onChange={(ligado) => {
+                  if (!ligado) form.setFieldsValue({ dataCastracao: null })
+                }}
+              />
+            </Form.Item>
+            {castrado && (
+              <Form.Item label="Data da castração" name="dataCastracao" style={{ flex: '1 1 180px' }}>
+                <DatePicker
+                  format={FORMATO_DATA}
+                  disabledDate={diaFuturo}
+                  placeholder="Opcional"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            )}
+          </Flex>
+
+          <Flex gap={16} wrap>
+            <Form.Item label="Vacinado" name="vacinado" valuePropName="checked" style={{ flex: '0 0 auto' }}>
+              <Switch
+                checkedChildren="Sim"
+                unCheckedChildren="Não"
+                onChange={(ligado) => {
+                  if (!ligado) form.setFieldsValue({ dosesVacina: null, dataRevacinacao: null })
+                }}
+              />
+            </Form.Item>
+            {vacinado && (
+              <>
+                <Form.Item
+                  label="Doses"
+                  name="dosesVacina"
+                  rules={[
+                    { type: 'integer', message: 'As doses devem ser um número inteiro.' },
+                    { type: 'number', min: 0, max: 100, message: 'Informe de 0 a 100 doses.' },
+                  ]}
+                  style={{ flex: '1 1 100px' }}
+                >
+                  <InputNumber min={0} max={100} precision={0} placeholder="Opcional" style={{ width: '100%' }} />
+                </Form.Item>
+                <Form.Item label="Revacinação" name="dataRevacinacao" style={{ flex: '1 1 160px' }}>
+                  <DatePicker format={FORMATO_DATA} placeholder="Opcional" style={{ width: '100%' }} />
+                </Form.Item>
+              </>
+            )}
+          </Flex>
 
           <Form.Item
             label="URL da foto"
