@@ -37,7 +37,7 @@ import { atualizarAnimal, criarAnimal, excluirAnimal, listarAnimais } from '../.
 import { cores, comOpacidade } from '../../theme/cores'
 import { errosDosCampos, mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { diaDaApi, diaFuturo, diaParaApi, formatarDia, FORMATO_DATA } from '../../utils/datas'
-import { normalizar, rotulo } from '../../utils/texto'
+import { normalizar, rotulo, urlValida } from '../../utils/texto'
 import {
   ESPECIES,
   PORTES,
@@ -122,15 +122,6 @@ function detalhesVacina(animal: Animal) {
   }
   if (animal.dataRevacinacao) partes.push(`revacinação em ${formatarDia(animal.dataRevacinacao)}`)
   return partes.join(' · ')
-}
-
-function urlValida(valor: string) {
-  try {
-    const url = new URL(valor)
-    return url.protocol === 'http:' || url.protocol === 'https:'
-  } catch {
-    return false
-  }
 }
 
 // Data "só dia": enviada quando mudou; null na edição só se o animal tinha data (para limpar).

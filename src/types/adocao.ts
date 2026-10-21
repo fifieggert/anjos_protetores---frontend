@@ -24,7 +24,7 @@ export interface AnimalDaSolicitacao {
 export interface SolicitacaoAdocao {
   id: string
   nome: string
-  // Só dígitos, com DDD (10 ou 11).
+  // Só dígitos: celular com DDD (11 dígitos). Registros antigos podem ter fixo com 10.
   telefone: string
   status: StatusSolicitacao
   criadoEm: string

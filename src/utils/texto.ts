@@ -12,6 +12,16 @@ export function normalizar(texto: string) {
     .toLowerCase()
 }
 
+// URL absoluta com http:// ou https:// (ex.: foto do animal, imagem do evento).
+export function urlValida(valor: string) {
+  try {
+    const url = new URL(valor)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 // Telefone brasileiro só com dígitos (com DDD) -> (47) 99999-9999 ou (47) 9999-9999.
 // Outro formato é mostrado como veio.
 export function formatarTelefone(digitos: string) {
