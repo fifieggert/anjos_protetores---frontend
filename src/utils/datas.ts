@@ -38,6 +38,11 @@ export function dataDaEdicao(dia: Dayjs | null | undefined, originalIso: string)
   return dataParaApi(dia, original.isValid() ? original : dayjs())
 }
 
+// Para o DatePicker: eventos novos não podem ser marcados em dia passado.
+export function diaPassado(dia: Dayjs) {
+  return dia.isBefore(dayjs(), 'day')
+}
+
 // Datas "só dia" (ex.: castração, revacinação), sem hora que importe.
 // Envio: meio-dia local. Em qualquer fuso do Brasil isso cai no mesmo dia em UTC,
 // então o dia não muda ao ser gravado nem ao ser lido de volta.
@@ -57,6 +62,12 @@ export function diaDaApi(iso: string | null | undefined) {
 
 export function formatarDia(iso: string | null | undefined) {
   return diaDaApi(iso)?.format(FORMATO_DATA) ?? '-'
+}
+
+// Dia da semana por extenso, ex.: "terça-feira".
+export function diaDaSemana(iso: string | null | undefined) {
+  const dia = diaDaApi(iso)
+  return dia ? dia.toDate().toLocaleDateString('pt-BR', { weekday: 'long' }) : ''
 }
 
 // Dias de calendário desde a data (0 = hoje).
