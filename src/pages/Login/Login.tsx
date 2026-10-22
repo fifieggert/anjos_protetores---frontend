@@ -166,7 +166,7 @@ function Login() {
           </Card>
 
           <div style={{ textAlign: 'center', marginTop: 24 }}>
-            <Link to="/publico">Ver animais disponíveis</Link>
+            <Link to="/">Ver animais disponíveis</Link>
           </div>
         </div>
       </div>

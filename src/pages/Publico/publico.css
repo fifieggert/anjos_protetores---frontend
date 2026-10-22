@@ -1,0 +1,426 @@
+/* Página pública. Só o que o antd não cobre: navbar fixa, hero, círculos desfocados,
+   carrossel e detalhes de layout. Cores e fontes seguem src/theme/cores.ts. */
+
+.pub-pagina {
+  min-height: 100vh;
+  background: #f7fbfd;
+  color: #172839;
+  /* nada de rolagem horizontal, mesmo com os círculos decorativos passando da borda */
+  overflow-x: clip;
+}
+
+.pub-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 16px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .pub-container {
+    padding-inline: 24px;
+  }
+}
+
+.pub-secao {
+  padding-block: 64px;
+  /* a navbar fixa não cobre o título ao rolar até a âncora */
+  scroll-margin-top: 72px;
+}
+
+@media (min-width: 992px) {
+  .pub-secao {
+    padding-block: 96px;
+  }
+}
+
+.pub-secao--alternada {
+  background: #ffffff;
+}
+
+.pub-cabecalho-secao {
+  max-width: 640px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+/* Texto só para leitores de tela */
+.pub-somente-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* As seções recebem foco ao navegar pelo menu; sem contorno nelas mesmas */
+.pub-pagina section:focus {
+  outline: none;
+}
+
+/* Foco visível em tudo que é interativo na página */
+.pub-pagina :is(a, button, [tabindex]):focus-visible,
+.pub-drawer :is(a, button):focus-visible {
+  outline: 3px solid #00b4f0;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Navbar */
+.pub-navbar {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 100;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.pub-navbar--rolada {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: #dfe6eb;
+  box-shadow: 0 4px 20px rgba(23, 40, 57, 0.06);
+}
+
+.pub-navbar-conteudo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pub-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #172839;
+  text-decoration: none;
+  font-family: 'Quicksand', 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.pub-marca img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 10px;
+  padding: 4px;
+  background: rgba(29, 197, 174, 0.15);
+}
+
+.pub-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pub-link {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #3d4c5b;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.pub-link:hover {
+  color: #172839;
+  background: #eff2f5;
+}
+
+.pub-drawer .pub-link {
+  display: block;
+  padding: 12px 16px;
+  font-size: 16px;
+}
+
+/* Hero */
+.pub-hero {
+  position: relative;
+  padding-top: 120px;
+  padding-bottom: 64px;
+  overflow: hidden;
+}
+
+@media (min-width: 992px) {
+  .pub-hero {
+    padding-top: 152px;
+    padding-bottom: 96px;
+  }
+}
+
+.pub-circulo {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  pointer-events: none;
+}
+
+.pub-hero-conteudo {
+  position: relative;
+}
+
+.pub-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(29, 197, 174, 0.15);
+  color: #172839;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pub-hero-titulo.ant-typography {
+  margin: 20px 0 16px;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.1;
+}
+
+/* destaque sublinhado: legível em qualquer fundo, sem depender do contraste da cor */
+.pub-destaque {
+  background-image: linear-gradient(transparent 62%, rgba(0, 180, 240, 0.28) 62%);
+  padding-inline: 2px;
+}
+
+.pub-hero-imagem {
+  position: relative;
+  border-radius: 32px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  box-shadow: 0 24px 60px rgba(23, 40, 57, 0.18);
+}
+
+@media (min-width: 992px) {
+  .pub-hero-imagem {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+.pub-hero-imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+}
+
+.pub-hero-moldura {
+  position: relative;
+  padding-bottom: 24px;
+}
+
+.pub-selo-flutuante {
+  position: absolute;
+  left: 16px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(23, 40, 57, 0.16);
+}
+
+@media (min-width: 992px) {
+  .pub-selo-flutuante {
+    left: -24px;
+  }
+}
+
+/* Faixa de números: sobe um pouco sobre o fim do hero */
+.pub-faixa-numeros {
+  position: relative;
+  margin-top: -24px;
+}
+
+/* Carrossel de eventos */
+.pub-carrossel-janela {
+  overflow: hidden;
+  padding: 8px 4px 16px;
+  margin: -8px -4px -16px;
+}
+
+.pub-carrossel-trilha {
+  --pub-espaco: 24px;
+  display: flex;
+  gap: var(--pub-espaco);
+  transition: transform 0.4s ease;
+}
+
+.pub-carrossel-item {
+  flex: 0 0 calc((100% - (var(--pub-por-tela) - 1) * var(--pub-espaco)) / var(--pub-por-tela));
+  min-width: 0;
+  display: flex;
+}
+
+.pub-carrossel-item > * {
+  flex: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pub-carrossel-trilha,
+  .pub-navbar,
+  .pub-cartao-animal {
+    transition: none;
+  }
+}
+
+.pub-data-evento {
+  flex-shrink: 0;
+  width: 60px;
+  padding: 8px 0;
+  border-radius: 14px;
+  text-align: center;
+  background: rgba(0, 180, 240, 0.12);
+  color: #172839;
+  line-height: 1.1;
+}
+
+.pub-data-evento strong {
+  display: block;
+  font-family: 'Quicksand', 'Inter', system-ui, sans-serif;
+  font-size: 24px;
+}
+
+.pub-data-evento span {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.pub-capa {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.pub-texto-limitado {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Animais */
+.pub-cartao-animal {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pub-cartao-animal:hover,
+.pub-cartao-animal:focus-within {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(23, 40, 57, 0.12);
+}
+
+.pub-cartao-animal .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pub-foto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.pub-foto-padrao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, rgba(0, 180, 240, 0.16), rgba(29, 197, 174, 0.2));
+  color: #1dc5ae;
+}
+
+/* Doações */
+.pub-doacoes {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  padding: 40px 24px;
+  background: linear-gradient(135deg, rgba(250, 124, 32, 0.12), rgba(0, 180, 240, 0.12));
+}
+
+@media (min-width: 768px) {
+  .pub-doacoes {
+    padding: 56px;
+  }
+}
+
+/* Rodapé */
+.pub-rodape {
+  padding-block: 56px 32px;
+  background: #172839;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.pub-rodape a {
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+}
+
+.pub-rodape a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.pub-rodape :is(a, button):focus-visible {
+  outline-color: #ffffff;
+}
+
+.pub-rodape-titulo {
+  margin: 0 0 12px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pub-rodape-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pub-rodape-direitos {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 13px;
+}

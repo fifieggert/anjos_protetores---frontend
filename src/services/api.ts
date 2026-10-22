@@ -5,6 +5,12 @@ export const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
 });
 
+// Rotas públicas (/publico/*): instância sem interceptores, para não enviar o token de
+// quem estiver logado nem tratar um erro como sessão expirada.
+export const apiPublica = axios.create({
+    baseURL: import.meta.env.VITE_API_URL,
+});
+
 // Chamado quando uma requisição autenticada recebe 401 (token inválido ou expirado).
 // O AuthProvider registra aqui o logout + redirecionamento para /login.
 let aoNaoAutorizado: (() => void) | null = null;

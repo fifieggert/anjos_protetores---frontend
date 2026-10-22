@@ -15,7 +15,7 @@ import Indicador from '../../components/Indicador'
 import { excluirEvento, listarEventos } from '../../services/eventos'
 import { cores, comOpacidade } from '../../theme/cores'
 import type { Evento } from '../../types/evento'
-import { diaDaApi, diaDaSemana, formatarDia } from '../../utils/datas'
+import { diaDaApi, diaDaSemana, formatarDia, textoHorario } from '../../utils/datas'
 import { mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { normalizar } from '../../utils/texto'
 import ModalEvento from './ModalEvento'
@@ -37,12 +37,6 @@ function realizado(evento: Evento) {
 
 function ehHoje(evento: Evento) {
   return diaDaApi(evento.data)?.isSame(dayjs(), 'day') ?? false
-}
-
-function textoHorario(evento: Evento) {
-  return evento.horarioFim
-    ? `${evento.horarioInicio} às ${evento.horarioFim}`
-    : `a partir das ${evento.horarioInicio}`
 }
 
 function Eventos() {
@@ -174,7 +168,7 @@ function Eventos() {
     {
       title: 'Horário',
       key: 'horario',
-      render: (_, evento) => <span style={{ whiteSpace: 'nowrap' }}>{textoHorario(evento)}</span>,
+      render: (_, evento) => <span style={{ whiteSpace: 'nowrap' }}>{textoHorario(evento.horarioInicio, evento.horarioFim)}</span>,
     },
     {
       title: 'Local',
