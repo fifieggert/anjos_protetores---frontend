@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { App, Avatar, Button, Card, Col, Empty, Flex, Input, Popconfirm, Result, Row, Table, Tabs, Tag, Tooltip, Typography } from 'antd'
 import type { TableColumnsType } from 'antd'
 import {
@@ -20,6 +20,7 @@ import {
   listarSolicitacoes,
   marcarEmContato,
 } from '../../services/adocoes'
+import { baixarPdfTermo, criarTermo } from '../../services/termos'
 import { cores, comOpacidade } from '../../theme/cores'
 import { rotulosEspecie } from '../../types/animal'
 import { STATUS_EM_ANDAMENTO, rotulosStatusSolicitacao } from '../../types/adocao'
@@ -34,7 +35,7 @@ const TAMANHO_PAGINA = 10
 const DIAS_PARA_DESTAQUE = 7
 
 type Aba = 'andamento' | 'concluidas' | 'recusadas' | 'todas'
-type Acao = 'contato' | 'concluir' | 'cancelar' | 'excluir'
+type Acao = 'contato' | 'concluir' | 'cancelar' | 'excluir' | 'termo'
 
 const coresStatus: Record<StatusSolicitacao, string> = {
   PENDENTE: cores.laranja,
@@ -42,6 +43,9 @@ const coresStatus: Record<StatusSolicitacao, string> = {
   APROVADA: cores.sucesso,
   RECUSADA: cores.textoSecundario,
 }
+
+// Tempo para a aba carregar o PDF antes de a URL do blob ser liberada.
+const MS_PARA_LIBERAR_PDF = 60_000
 
 const filtroDaAba: Record<Aba, (status: StatusSolicitacao) => boolean> = {
   andamento: (status) => STATUS_EM_ANDAMENTO.includes(status),
@@ -65,6 +69,27 @@ function nomeDoAnimal(solicitacao: SolicitacaoAdocao) {
   return solicitacao.animal?.nome ?? 'o animal'
 }
 
+function podeGerarTermo(solicitacao: SolicitacaoAdocao) {
+  return solicitacao.status === 'EM_CONTATO' || solicitacao.status === 'APROVADA'
+}
+
+function nomeArquivoTermo(nomeAnimal: string) {
+  const slug = normalizar(nomeAnimal)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return `termo-adocao-${slug || 'animal'}.pdf`
+}
+
+// Plano B quando o navegador bloqueia a nova aba: baixa o arquivo.
+function baixarArquivo(url: string, nomeArquivo: string) {
+  const link = document.createElement('a')
+  link.href = url
+  link.download = nomeArquivo
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+}
+
 function Adocoes() {
   const { message } = App.useApp()
 
@@ -75,6 +100,8 @@ function Adocoes() {
   const [busca, setBusca] = useState('')
   const [pagina, setPagina] = useState(1)
   const [processando, setProcessando] = useState<{ id: string; acao: Acao } | null>(null)
+  // Trava síncrona contra clique duplo (o estado só desabilita o botão no próximo render).
+  const gerandoTermo = useRef(false)
 
   // Incrementar a versão refaz a busca da lista.
   const [versaoLista, setVersaoLista] = useState(0)
@@ -153,6 +180,39 @@ function Adocoes() {
       const status = statusDoErro(e)
       if (status === 404 || status === 409) carregar()
     } finally {
+      setProcessando(null)
+    }
+  }
+
+  // Abre o PDF do termo numa nova aba. A aba é aberta em branco ANTES das chamadas à API,
+  // ainda dentro do clique, para o navegador não bloquear o pop-up.
+  async function gerarTermo(solicitacao: SolicitacaoAdocao) {
+    const animal = solicitacao.animal
+    if (!animal || gerandoTermo.current) return
+    gerandoTermo.current = true
+    setProcessando({ id: solicitacao.id, acao: 'termo' })
+
+    const aba = window.open('', '_blank')
+    if (aba) {
+      aba.opener = null
+      aba.document.title = 'Gerando termo...'
+    }
+
+    try {
+      const termo = await criarTermo(animal.id, solicitacao.id)
+      const pdf = await baixarPdfTermo(termo.id)
+      const url = URL.createObjectURL(pdf)
+      if (aba && !aba.closed) aba.location.href = url
+      else baixarArquivo(url, nomeArquivoTermo(animal.nome))
+      window.setTimeout(() => URL.revokeObjectURL(url), MS_PARA_LIBERAR_PDF)
+      message.success('Termo gerado.')
+    } catch (e) {
+      aba?.close()
+      message.error(mensagemDeErro(e, 'Não foi possível gerar o termo.'))
+      const status = statusDoErro(e)
+      if (status === 404 || status === 409) carregar()
+    } finally {
+      gerandoTermo.current = false
       setProcessando(null)
     }
   }
@@ -264,7 +324,38 @@ function Adocoes() {
           </Popconfirm>
         )
 
-        if (!emAndamento(solicitacao)) return <Flex gap={4}>{botaoExcluir}</Flex>
+        const botaoTermo =
+          solicitacao.status === 'RECUSADA' ? null : podeGerarTermo(solicitacao) ? (
+            <Tooltip title="Gerar termo de adoção">
+              <Button
+                type="text"
+                icon={<FileTextOutlined />}
+                aria-label={`Gerar termo de adoção de ${animal}`}
+                loading={ocupado(solicitacao, 'termo')}
+                // um termo por vez: os botões das outras linhas esperam
+                disabled={!solicitacao.animal || (processando?.acao === 'termo' && !ocupado(solicitacao, 'termo'))}
+                onClick={() => gerarTermo(solicitacao)}
+              />
+            </Tooltip>
+          ) : (
+            <Tooltip title="Disponível quando o interessado estiver em contato">
+              <Button
+                type="text"
+                icon={<FileTextOutlined />}
+                aria-label="Gerar termo (disponível quando o interessado estiver em contato)"
+                disabled
+              />
+            </Tooltip>
+          )
+
+        if (!emAndamento(solicitacao)) {
+          return (
+            <Flex gap={4}>
+              {botaoTermo}
+              {botaoExcluir}
+            </Flex>
+          )
+        }
 
         return (
           <Flex gap={4}>
@@ -297,9 +388,7 @@ function Adocoes() {
                 />
               </Tooltip>
             )}
-            <Tooltip title="Disponível em breve">
-              <Button type="text" icon={<FileTextOutlined />} aria-label="Gerar termo (disponível em breve)" disabled />
-            </Tooltip>
+            {botaoTermo}
             <Popconfirm
               title="Concluir a adoção?"
               description={
