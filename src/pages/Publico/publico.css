@@ -26,12 +26,13 @@
 .pub-secao {
   padding-block: 64px;
   /* a navbar fixa não cobre o título ao rolar até a âncora */
-  scroll-margin-top: 72px;
+  scroll-margin-top: 80px;
 }
 
 @media (min-width: 992px) {
   .pub-secao {
     padding-block: 96px;
+    scroll-margin-top: 92px;
   }
 }
 
@@ -87,6 +88,12 @@
     border-color 0.2s ease;
 }
 
+@media (min-width: 992px) {
+  .pub-navbar {
+    height: 84px;
+  }
+}
+
 .pub-navbar--rolada {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
@@ -102,25 +109,43 @@
   gap: 16px;
 }
 
+/* Logo na barra: a imagem já traz o nome, então vai sozinha, sem fundo, na proporção original
+   (593x421). Só a altura é fixada; a largura acompanha. */
 .pub-marca {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: #172839;
-  text-decoration: none;
-  font-family: 'Quicksand', 'Inter', system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 20px;
-  white-space: nowrap;
+  flex-shrink: 0;
+  border-radius: 12px;
+  line-height: 0;
 }
 
-.pub-marca img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  border-radius: 10px;
-  padding: 4px;
-  background: rgba(29, 197, 174, 0.15);
+.pub-marca-logo {
+  display: block;
+  height: 48px;
+  width: auto;
+}
+
+@media (min-width: 992px) {
+  .pub-marca-logo {
+    height: 58px;
+  }
+}
+
+/* Rodapé: a logo é azul-petróleo e some no fundo escuro. Um cartão claro atrás dela
+   resolve sem precisar de uma versão clara da imagem. */
+.pub-rodape-logo {
+  display: inline-block;
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: #ffffff;
+  line-height: 0;
+}
+
+.pub-rodape-logo img {
+  display: block;
+  width: 176px;
+  max-width: 100%;
+  height: auto;
 }
 
 .pub-links {
@@ -158,14 +183,14 @@
 /* Hero */
 .pub-hero {
   position: relative;
-  padding-top: 120px;
+  padding-top: 124px;
   padding-bottom: 64px;
   overflow: hidden;
 }
 
 @media (min-width: 992px) {
   .pub-hero {
-    padding-top: 152px;
+    padding-top: 164px;
     padding-bottom: 96px;
   }
 }

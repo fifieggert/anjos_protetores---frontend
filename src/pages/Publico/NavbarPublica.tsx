@@ -59,8 +59,8 @@ function NavbarPublica() {
     <header className={`pub-navbar${rolada || menuAberto ? ' pub-navbar--rolada' : ''}`}>
       <nav className="pub-container pub-navbar-conteudo" aria-label="Navegação principal">
         <a className="pub-marca" href="#inicio" onClick={(e) => irPara(e, 'inicio')}>
-          <img src={logo} alt="" />
-          <span>Anjos Protetores</span>
+          {/* a imagem já contém o nome do abrigo */}
+          <img className="pub-marca-logo" src={logo} alt="Anjos Protetores - página inicial" />
         </a>
 
         {desktop ? (
