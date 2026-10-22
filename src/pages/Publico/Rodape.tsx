@@ -78,9 +78,8 @@ function Rodape() {
       <div className="pub-container">
         <Row gutter={[32, 32]}>
           <Col xs={24} md={8}>
-            <div className="pub-marca" style={{ color: '#ffffff' }}>
-              <img src={logo} alt="" />
-              <span>{dadosAbrigo.nome}</span>
+            <div className="pub-rodape-logo">
+              <img src={logo} alt={dadosAbrigo.nome} />
             </div>
             <p style={{ margin: '12px 0 0' }}>Cada vida importa.</p>
           </Col>
