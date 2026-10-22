@@ -70,6 +70,19 @@ export function diaDaSemana(iso: string | null | undefined) {
   return dia ? dia.toDate().toLocaleDateString('pt-BR', { weekday: 'long' }) : ''
 }
 
+const MESES_ABREVIADOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
+// Mês abreviado de uma data "só dia", ex.: "out".
+export function mesAbreviado(iso: string | null | undefined) {
+  const dia = diaDaApi(iso)
+  return dia ? (MESES_ABREVIADOS[dia.month()] ?? '') : ''
+}
+
+// Horário de um evento: "09:00 às 16:00" ou "a partir das 09:00".
+export function textoHorario(inicio: string, fim: string | null | undefined) {
+  return fim ? `${inicio} às ${fim}` : `a partir das ${inicio}`
+}
+
 // Dias de calendário desde a data (0 = hoje).
 export function diasDesde(iso: string) {
   const data = dayjs(iso)

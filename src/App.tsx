@@ -17,7 +17,9 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/publico" element={<Publico />} />
+          {/* página pública: inicial do site, sem login e sem o layout interno */}
+          <Route path="/" element={<Publico />} />
+          <Route path="/publico" element={<Navigate to="/" replace />} />
 
           <Route
             element={
@@ -55,7 +57,7 @@ function App() {
             />
           </Route>
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

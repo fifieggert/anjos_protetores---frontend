@@ -37,7 +37,7 @@ import { atualizarAnimal, criarAnimal, excluirAnimal, listarAnimais } from '../.
 import { cores, comOpacidade } from '../../theme/cores'
 import { errosDosCampos, mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { diaDaApi, diaFuturo, diaParaApi, formatarDia, FORMATO_DATA } from '../../utils/datas'
-import { normalizar, rotulo, urlValida } from '../../utils/texto'
+import { formatarIdade, normalizar, rotulo, urlValida } from '../../utils/texto'
 import {
   ESPECIES,
   PORTES,
@@ -367,8 +367,7 @@ function Animais() {
       title: 'Idade',
       dataIndex: 'idade',
       key: 'idade',
-      render: (idade?: number | null) =>
-        typeof idade === 'number' ? `${idade} ${idade === 1 ? 'ano' : 'anos'}` : '-',
+      render: (idade?: number | null) => formatarIdade(idade) ?? '-',
     },
     {
       title: 'Porte',
