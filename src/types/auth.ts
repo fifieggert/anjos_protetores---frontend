@@ -1,10 +1,9 @@
-export type Perfil = 'ADMIN' | 'FUNCIONARIO' | 'VOLUNTARIO'
+export type Perfil = 'ADMIN' | 'VOLUNTARIO'
 
-export const PERFIS: readonly Perfil[] = ['ADMIN', 'FUNCIONARIO', 'VOLUNTARIO']
+export const PERFIS: readonly Perfil[] = ['ADMIN', 'VOLUNTARIO']
 
 export const rotulosPerfil: Record<Perfil, string> = {
   ADMIN: 'Coordenadora',
-  FUNCIONARIO: 'Funcionário',
   VOLUNTARIO: 'Voluntário',
 }
 
