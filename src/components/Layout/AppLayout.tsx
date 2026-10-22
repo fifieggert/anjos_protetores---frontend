@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Avatar, Badge, Button, Drawer, Grid, Input, Layout, Menu, Typography } from 'antd'
+import { Avatar, Badge, Button, Drawer, Dropdown, Grid, Input, Layout, Menu, Typography } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   BarChartOutlined,
@@ -11,10 +11,12 @@ import {
   HeartOutlined,
   HomeOutlined,
   InboxOutlined,
+  KeyOutlined,
   LogoutOutlined,
   MenuOutlined,
   RightOutlined,
   SearchOutlined,
+  TeamOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -24,6 +26,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { rotulosPerfil } from '../../types/auth'
 import { aoAlterarEstoque, listarAlertas } from '../../services/estoque'
 import type { EstadoTelaEstoque, ItemEstoque } from '../../types/estoque'
+import ModalAlterarSenha from './ModalAlterarSenha'
 
 const { Header, Sider, Content } = Layout
 
@@ -36,11 +39,12 @@ const menuItems: NonNullable<MenuProps['items']> = [
   { key: '/adocoes', icon: <HomeOutlined />, label: 'Adoções' },
   { key: '/eventos', icon: <CalendarOutlined />, label: 'Eventos' },
   { key: '/relatorios', icon: <BarChartOutlined />, label: 'Relatórios' },
+  { key: '/usuarios', icon: <TeamOutlined />, label: 'Usuários' },
   { key: '/publico', icon: <GlobalOutlined />, label: 'Área Pública' },
 ]
 
 // Itens do menu visíveis só para ADMIN (as rotas também são protegidas no App.tsx).
-const ROTAS_SOMENTE_ADMIN = ['/adocoes', '/eventos', '/relatorios']
+const ROTAS_SOMENTE_ADMIN = ['/adocoes', '/eventos', '/relatorios', '/usuarios']
 
 function iniciais(nome: string) {
   const partes = nome.trim().split(/\s+/)
@@ -257,14 +261,32 @@ function AppLayout() {
   const telas = Grid.useBreakpoint()
   const desktop = !!telas.lg
   const [menuAberto, setMenuAberto] = useState(false)
+  const [alterandoSenha, setAlterandoSenha] = useState(false)
   const espacamento = telas.md ? 32 : 16
-  const { usuario } = useAuth()
+  const navigate = useNavigate()
+  const { usuario, logout } = useAuth()
   // Buscado aqui (e não no Sidebar) porque no celular o Drawer só monta o menu quando abre.
   const alertasEstoque = useAlertasEstoque()
 
   // O nome vem da resposta do login; "Usuário" quando o backend não o envia.
   const nome = usuario?.nome ?? 'Usuário'
   const perfil = usuario ? rotulosPerfil[usuario.perfil] : ''
+
+  const menuUsuario: MenuProps = {
+    items: [
+      { key: 'senha', icon: <KeyOutlined />, label: 'Alterar senha' },
+      { type: 'divider' },
+      { key: 'sair', icon: <LogoutOutlined />, label: 'Sair' },
+    ],
+    onClick: ({ key }) => {
+      if (key === 'senha') {
+        setAlterandoSenha(true)
+      } else if (key === 'sair') {
+        logout()
+        navigate('/login', { replace: true })
+      }
+    },
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -348,24 +370,42 @@ function AppLayout() {
               />
             </Badge>
 
-            {telas.sm && (
-              <div style={{ textAlign: 'right', lineHeight: 1.25 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: cores.texto }}>{nome}</div>
-                <div style={{ fontSize: 12, color: cores.textoSecundario }}>{perfil}</div>
-              </div>
-            )}
+            {/* nome e avatar abrem o menu da conta (alterar senha, sair) */}
+            <Dropdown menu={menuUsuario} trigger={['click']} placement="bottomRight">
+              <button
+                type="button"
+                aria-label={`Menu da conta de ${nome}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  padding: 0,
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  font: 'inherit',
+                }}
+              >
+                {telas.sm && (
+                  <div style={{ textAlign: 'right', lineHeight: 1.25 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: cores.texto }}>{nome}</div>
+                    <div style={{ fontSize: 12, color: cores.textoSecundario }}>{perfil}</div>
+                  </div>
+                )}
 
-            <Avatar
-              size={40}
-              style={{
-                flexShrink: 0,
-                fontWeight: 700,
-                color: cores.teal,
-                background: comOpacidade(cores.teal, 0.2),
-              }}
-            >
-              {iniciais(nome)}
-            </Avatar>
+                <Avatar
+                  size={40}
+                  style={{
+                    flexShrink: 0,
+                    fontWeight: 700,
+                    color: cores.teal,
+                    background: comOpacidade(cores.teal, 0.2),
+                  }}
+                >
+                  {iniciais(nome)}
+                </Avatar>
+              </button>
+            </Dropdown>
           </div>
         </Header>
 
@@ -373,6 +413,8 @@ function AppLayout() {
           <Outlet />
         </Content>
       </Layout>
+
+      <ModalAlterarSenha aberto={alterandoSenha} onFechar={() => setAlterandoSenha(false)} />
     </Layout>
   )
 }

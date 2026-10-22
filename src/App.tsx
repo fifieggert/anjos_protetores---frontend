@@ -8,6 +8,7 @@ import Doacoes from './pages/Doacoes/Doacoes'
 import Adocoes from './pages/Adocoes/Adocoes'
 import Eventos from './pages/Eventos/Eventos'
 import Relatorios from './pages/Relatorios/Relatorios'
+import Usuarios from './pages/Usuarios/Usuarios'
 import Login from './pages/Login/Login'
 import Publico from './pages/Publico/Publico'
 
@@ -52,6 +53,14 @@ function App() {
               element={
                 <ProtectedRoute perfisPermitidos={['ADMIN']}>
                   <Relatorios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/usuarios"
+              element={
+                <ProtectedRoute perfisPermitidos={['ADMIN']}>
+                  <Usuarios />
                 </ProtectedRoute>
               }
             />

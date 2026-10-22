@@ -61,6 +61,22 @@ export function celularValido(digitos: string) {
   return /^\d{2}9\d{8}$/.test(digitos) && DDDS.has(Number(digitos.slice(0, 2)))
 }
 
+// CPF só com dígitos -> 000.000.000-00. Outro formato é mostrado como veio.
+export function formatarCpf(digitos: string) {
+  const partes = /^(\d{3})(\d{3})(\d{3})(\d{2})$/.exec(digitos)
+  return partes ? `${partes[1]}.${partes[2]}.${partes[3]}-${partes[4]}` : digitos
+}
+
+// Máscara enquanto a pessoa digita: 000.000.000-00 (até 11 dígitos). Os dígitos
+// verificadores são conferidos pelo backend.
+export function mascaraCpf(texto: string) {
+  const d = somenteDigitos(texto).slice(0, 11)
+  if (d.length <= 3) return d
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+}
+
 // Só os dígitos de um texto (ex.: para buscar telefone digitado com máscara).
 export function somenteDigitos(texto: string) {
   return texto.replace(/\D/g, '')
