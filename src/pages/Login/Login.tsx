@@ -6,6 +6,8 @@ import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import logo from '../../assets/logo-anjos.png'
 import { cores, comOpacidade, fontes } from '../../theme/cores'
+import { rotaInicial } from '../../utils/rotas'
+import type { Perfil } from '../../types/auth'
 
 interface CamposLogin {
   email: string
@@ -20,13 +22,14 @@ function mensagemDeErro(erro: unknown) {
   return 'Erro ao entrar. Tente novamente.'
 }
 
-// Rota de origem guardada pelo ProtectedRoute; só aceita caminhos internos.
-function rotaDeOrigem(state: unknown) {
+// Rota de origem guardada pelo ProtectedRoute; só aceita caminhos internos. Sem origem,
+// vai para a tela inicial do perfil (ADMIN: Dashboard; VOLUNTARIO: Animais).
+function rotaDeOrigem(state: unknown, perfil: Perfil) {
   const from = (state as { from?: unknown } | null)?.from
   if (typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') && !from.startsWith('/login')) {
     return from
   }
-  return '/dashboard'
+  return rotaInicial(perfil)
 }
 
 function Login() {
@@ -36,9 +39,9 @@ function Login() {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
-  // Já logado (ou acabou de logar): segue para a rota de origem ou /dashboard.
+  // Já logado (ou acabou de logar): segue para a rota de origem ou para a tela inicial do perfil.
   if (!carregando && usuario) {
-    return <Navigate to={rotaDeOrigem(location.state)} replace />
+    return <Navigate to={rotaDeOrigem(location.state, usuario.perfil)} replace />
   }
 
   async function entrar({ email, senha }: CamposLogin) {

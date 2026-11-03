@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Avatar, Badge, Button, Drawer, Dropdown, Grid, Input, Layout, Menu, Typography } from 'antd'
 import type { MenuProps } from 'antd'
 import {
-  BarChartOutlined,
   BellOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
@@ -38,13 +37,12 @@ const menuItems: NonNullable<MenuProps['items']> = [
   { key: '/doacoes', icon: <InboxOutlined />, label: 'Doações' },
   { key: '/adocoes', icon: <HomeOutlined />, label: 'Adoções' },
   { key: '/eventos', icon: <CalendarOutlined />, label: 'Eventos' },
-  { key: '/relatorios', icon: <BarChartOutlined />, label: 'Relatórios' },
   { key: '/usuarios', icon: <TeamOutlined />, label: 'Usuários' },
   { key: '/publico', icon: <GlobalOutlined />, label: 'Área Pública' },
 ]
 
 // Itens do menu visíveis só para ADMIN (as rotas também são protegidas no App.tsx).
-const ROTAS_SOMENTE_ADMIN = ['/adocoes', '/eventos', '/relatorios', '/usuarios']
+const ROTAS_SOMENTE_ADMIN = ['/dashboard', '/adocoes', '/eventos', '/usuarios']
 
 function iniciais(nome: string) {
   const partes = nome.trim().split(/\s+/)

@@ -3,6 +3,7 @@ import { Button, Result, Spin } from 'antd'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import type { Perfil } from '../types/auth'
+import { rotaInicial } from '../utils/rotas'
 
 interface ProtectedRouteProps {
   perfisPermitidos?: Perfil[]
@@ -34,8 +35,8 @@ function ProtectedRoute({ perfisPermitidos, children }: ProtectedRouteProps) {
         title="Acesso negado"
         subTitle="Você não tem permissão para acessar esta página."
         extra={
-          <Button type="primary" onClick={() => navigate('/dashboard')}>
-            Voltar para o Dashboard
+          <Button type="primary" onClick={() => navigate(rotaInicial(usuario.perfil))}>
+            Voltar para o início
           </Button>
         }
       />
