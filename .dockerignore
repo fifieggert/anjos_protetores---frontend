@@ -1,0 +1,38 @@
+# Arquivos que NÃO entram no "docker build" (o contexto enviado ao Docker).
+
+# Gerados ou instalados dentro da imagem
+node_modules
+dist
+dist-ssr
+coverage
+.vite
+
+# Variáveis de ambiente locais: nenhum .env entra na imagem. Os valores do build vêm
+# dos --build-arg (ver Dockerfile).
+.env
+.env.*
+*.local
+
+# Git, CI e editores
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+
+# Docker e documentação
+Dockerfile
+.dockerignore
+docs
+*.md
+
+# Ferramentas que não participam do build
+sonar-project.properties
+.scannerwork
+
+# Logs e sistema
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

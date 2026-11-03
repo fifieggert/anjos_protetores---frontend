@@ -1,0 +1,86 @@
+# Publicação da imagem do frontend no ECR (registro de imagens da AWS).
+# Detalhes em docs/deploy-frontend.md.
+#
+# ATENÇÃO: este workflow só PUBLICA a imagem (tags <sha do commit> e latest). Ele NÃO
+# coloca a versão no ar. Quem atualiza o servidor é o deploy do BACKEND
+# (repositório anjos_protetores---backend, .github/workflows/deploy.yml), que em toda
+# execução baixa "anjos-frontend:latest" e recria o container "web" se a imagem mudou.
+# Para publicar só o frontend: rode este workflow e depois dispare o "Deploy" do backend
+# manualmente (Actions > Deploy > Run workflow, branch main).
+#
+# Autenticação na AWS por OIDC: sem chave de acesso guardada no GitHub. A role
+# github-actions-deploy só aceita execuções da branch main (infra/github_oidc.tf, no
+# backend). O ARN fica na variável do repositório AWS_ROLE_ARN.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # o GitHub emite o token OIDC que é trocado por credenciais da AWS
+  contents: read
+
+# Nunca duas publicações ao mesmo tempo: a mais nova espera a anterior terminar, para a
+# tag "latest" sempre ficar com o último commit.
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: sa-east-1
+  REGISTRO: 188289742729.dkr.ecr.sa-east-1.amazonaws.com
+  REPOSITORIO: anjos-frontend
+
+jobs:
+  publicar:
+    name: Build e push da imagem no ECR
+    # Sem "environment:" de propósito: com ele o token OIDC muda de formato e a trust
+    # policy da role (que confia em ref:refs/heads/main) recusaria.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Credenciais da AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-session-name: deploy-frontend-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login no ECR
+        run: aws ecr get-login-password | docker login --username AWS --password-stdin "$REGISTRO"
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # Duas tags: o SHA do commit (única, serve para rollback) e latest (a que o deploy do
+      # backend usa). O cache de camadas (type=gha) é o mesmo do CI.
+      # VITE_WHATSAPP_ABRIGO vem da variável do repositório de mesmo nome (não é segredo:
+      # o número aparece na página pública). Sem ela, os botões de WhatsApp ficam escondidos.
+      - name: Build e push da imagem
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          provenance: false
+          build-args: |
+            VITE_API_URL=/api
+            VITE_WHATSAPP_ABRIGO=${{ vars.VITE_WHATSAPP_ABRIGO }}
+          tags: |
+            ${{ env.REGISTRO }}/${{ env.REPOSITORIO }}:${{ github.sha }}
+            ${{ env.REGISTRO }}/${{ env.REPOSITORIO }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Resumo
+        run: |
+          {
+            echo "### Imagem do frontend publicada"
+            echo "- \`$REGISTRO/$REPOSITORIO:$GITHUB_SHA\` (também como \`latest\`)"
+            echo "- Para colocar no ar: rode o workflow **Deploy** do backend (Run workflow, branch main)."
+          } >> "$GITHUB_STEP_SUMMARY"
