@@ -1,0 +1,15 @@
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: #f7fbfd;
+  color: #172839;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Títulos (Typography.Title) em Quicksand. O antd não tem token para a fonte dos títulos. */
+body .ant-typography:is(h1, h2, h3, h4, h5),
+body .ant-typography :is(h1, h2, h3, h4, h5) {
+  font-family: 'Quicksand', 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+}
