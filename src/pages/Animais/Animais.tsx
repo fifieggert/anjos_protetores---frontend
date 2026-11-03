@@ -34,7 +34,7 @@ import {
 import type { Dayjs } from 'dayjs'
 import { useAuth } from '../../contexts/AuthContext'
 import { atualizarAnimal, criarAnimal, excluirAnimal, listarAnimais } from '../../services/animais'
-import { cores, comOpacidade } from '../../theme/cores'
+import { cores, comOpacidade, coresStatusAnimal } from '../../theme/cores'
 import { errosDosCampos, mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { diaDaApi, diaFuturo, diaParaApi, formatarDia, FORMATO_DATA } from '../../utils/datas'
 import { formatarIdade, normalizar, rotulo, urlValida } from '../../utils/texto'
@@ -55,13 +55,6 @@ import type { Animal, DadosAnimal, Especie, Porte, Sexo, StatusAnimal, StatusEdi
 const MAX_TEXTO = 191
 
 const TODOS = 'TODOS'
-
-const coresStatus: Record<StatusAnimal, string> = {
-  DISPONIVEL: cores.sucesso,
-  EM_TRATAMENTO: cores.primaria,
-  EM_ESPERA: cores.laranja,
-  ADOTADO: cores.teal,
-}
 
 interface CamposAnimal {
   nome: string
@@ -413,7 +406,7 @@ function Animais() {
       dataIndex: 'status',
       key: 'status',
       render: (status: StatusAnimal) => (
-        <Tag color={coresStatus[status] ?? cores.textoSecundario}>{rotulo(rotulosStatusAnimal, status)}</Tag>
+        <Tag color={coresStatusAnimal[status] ?? cores.textoSecundario}>{rotulo(rotulosStatusAnimal, status)}</Tag>
       ),
     },
     {

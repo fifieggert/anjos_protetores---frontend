@@ -1,3 +1,5 @@
+import type { StatusAnimal } from '../types/animal'
+
 // Paleta do protótipo (Lovable). Use estas constantes nas telas em vez de valores soltos.
 export const cores = {
   primaria: '#00b4f0',
@@ -26,4 +28,12 @@ export function comOpacidade(hex: string, opacidade: number) {
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
   return `rgba(${r}, ${g}, ${b}, ${opacidade})`
+}
+
+// Cor de cada status de animal (tags da lista de animais e gráficos do painel).
+export const coresStatusAnimal: Record<StatusAnimal, string> = {
+  DISPONIVEL: cores.sucesso,
+  EM_TRATAMENTO: cores.primaria,
+  EM_ESPERA: cores.laranja,
+  ADOTADO: cores.teal,
 }

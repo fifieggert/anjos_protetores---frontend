@@ -78,6 +78,13 @@ export function mesAbreviado(iso: string | null | undefined) {
   return dia ? (MESES_ABREVIADOS[dia.month()] ?? '') : ''
 }
 
+// Mês "AAAA-MM" (ex.: do gráfico do painel) como "jun/26". Valor inesperado volta como veio.
+export function rotuloMes(mes: string) {
+  const partes = /^(\d{4})-(\d{2})$/.exec(mes)
+  const nome = partes ? MESES_ABREVIADOS[Number(partes[2]) - 1] : undefined
+  return partes && nome ? `${nome}/${partes[1]?.slice(2)}` : mes
+}
+
 // Horário de um evento: "09:00 às 16:00" ou "a partir das 09:00".
 export function textoHorario(inicio: string, fim: string | null | undefined) {
   return fim ? `${inicio} às ${fim}` : `a partir das ${inicio}`

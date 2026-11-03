@@ -6,6 +6,7 @@ import logo from '../../assets/logo-anjos.png'
 import { useAuth } from '../../contexts/AuthContext'
 import { LINKS_SECOES, rolarPara } from './rolagem'
 import type { IdSecao } from './rolagem'
+import { rotaInicial } from '../../utils/rotas'
 
 // A partir desta rolagem a barra ganha fundo translúcido.
 const ROLAGEM_PARA_FUNDO = 8
@@ -47,7 +48,7 @@ function NavbarPublica() {
     <Button
       type="primary"
       icon={<LoginOutlined />}
-      onClick={() => navigate(usuario ? '/dashboard' : '/login')}
+      onClick={() => navigate(usuario ? rotaInicial(usuario.perfil) : '/login')}
       block={!desktop}
       size={desktop ? 'middle' : 'large'}
     >

@@ -7,7 +7,6 @@ import Animais from './pages/Animais/Animais'
 import Doacoes from './pages/Doacoes/Doacoes'
 import Adocoes from './pages/Adocoes/Adocoes'
 import Eventos from './pages/Eventos/Eventos'
-import Relatorios from './pages/Relatorios/Relatorios'
 import Usuarios from './pages/Usuarios/Usuarios'
 import Login from './pages/Login/Login'
 import Publico from './pages/Publico/Publico'
@@ -29,7 +28,14 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute perfisPermitidos={['ADMIN']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/animais" element={<Animais />} />
             <Route path="/doacoes" element={<Doacoes />} />
             <Route
@@ -45,14 +51,6 @@ function App() {
               element={
                 <ProtectedRoute perfisPermitidos={['ADMIN']}>
                   <Eventos />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/relatorios"
-              element={
-                <ProtectedRoute perfisPermitidos={['ADMIN']}>
-                  <Relatorios />
                 </ProtectedRoute>
               }
             />
