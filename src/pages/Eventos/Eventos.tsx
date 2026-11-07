@@ -19,6 +19,7 @@ import { diaDaApi, diaDaSemana, formatarDia, textoHorario } from '../../utils/da
 import { mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { normalizar } from '../../utils/texto'
 import ModalEvento from './ModalEvento'
+import { urlImagem } from '../../utils/imagem'
 
 const TAMANHO_PAGINA = 10
 
@@ -130,7 +131,7 @@ function Eventos() {
           <Avatar
             shape="square"
             size={48}
-            src={evento.imagemUrl || undefined}
+            src={urlImagem(evento.imagemUrl)}
             alt={evento.titulo}
             icon={<CalendarOutlined />}
             style={{

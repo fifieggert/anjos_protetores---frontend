@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react'
-import { App, DatePicker, Flex, Form, Input, Modal, TimePicker, Typography } from 'antd'
+import { App, DatePicker, Flex, Form, Input, Modal, TimePicker } from 'antd'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { atualizarEvento, criarEvento } from '../../services/eventos'
-import { cores } from '../../theme/cores'
 import { LIMITES_EVENTO } from '../../types/evento'
 import type { DadosEvento, Evento } from '../../types/evento'
 import { diaDaApi, diaParaApi, diaPassado, FORMATO_DATA } from '../../utils/datas'
 import { errosDosCampos, mensagemDeErro, statusDoErro } from '../../utils/erros'
-import { urlValida } from '../../utils/texto'
+import CampoImagem from '../../components/CampoImagem/CampoImagem'
 
 const FORMATO_HORARIO = 'HH:mm'
 
@@ -19,7 +18,8 @@ interface CamposEvento {
   horarioInicio?: Dayjs | null
   horarioFim?: Dayjs | null
   local?: string
-  imagemUrl?: string
+  // caminho devolvido pelo upload (ou URL antiga); null = imagem removida
+  imagemUrl?: string | null
 }
 
 const CAMPOS_FORM: readonly (keyof CamposEvento)[] = [
@@ -43,7 +43,7 @@ function horarioParaApi(horario: Dayjs | null | undefined) {
 }
 
 // Texto opcional: vazio vira null.
-function textoOuNulo(valor: string | undefined) {
+function textoOuNulo(valor: string | null | undefined) {
   const texto = valor?.trim() ?? ''
   return texto === '' ? null : texto
 }
@@ -86,36 +86,6 @@ function montarCorpo(valores: CamposEvento, evento: Evento | null): DadosEvento 
   return corpo
 }
 
-// Pré-visualização pequena da imagem; some se a URL não carregar.
-function PreviaImagem({ url }: { url: string }) {
-  const [falhou, setFalhou] = useState(false)
-
-  if (falhou) {
-    return (
-      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-        Não foi possível carregar a imagem desta URL.
-      </Typography.Text>
-    )
-  }
-
-  return (
-    <img
-      src={url}
-      alt="Pré-visualização da imagem do evento"
-      onError={() => setFalhou(true)}
-      style={{
-        display: 'block',
-        width: 160,
-        height: 90,
-        objectFit: 'cover',
-        borderRadius: 8,
-        border: `1px solid ${cores.borda}`,
-        background: cores.fundoSuave,
-      }}
-    />
-  )
-}
-
 interface ModalEventoProps {
   aberto: boolean
   // null = cadastro de novo evento
@@ -131,8 +101,9 @@ function ModalEvento({ aberto, evento, onFechar, onSalvo, onDesatualizado }: Mod
   const [salvando, setSalvando] = useState(false)
   const editando = evento !== null
 
-  const imagemUrl = (Form.useWatch('imagemUrl', form) ?? '').trim()
-  const previa = imagemUrl.length <= LIMITES_EVENTO.imagemUrlMax && urlValida(imagemUrl) ? imagemUrl : null
+  const tituloDigitado = Form.useWatch('titulo', form)
+  // enquanto a imagem sobe, o botão de salvar espera (senão o evento seria salvo sem ela)
+  const [enviandoImagem, setEnviandoImagem] = useState(false)
 
   useEffect(() => {
     if (!aberto) return
@@ -191,6 +162,7 @@ function ModalEvento({ aberto, evento, onFechar, onSalvo, onDesatualizado }: Mod
       okText={editando ? 'Salvar' : 'Cadastrar'}
       cancelText="Cancelar"
       confirmLoading={salvando}
+      okButtonProps={{ disabled: enviandoImagem }}
       cancelButtonProps={{ disabled: salvando }}
       mask={{ closable: !salvando }}
       width={600}
@@ -310,28 +282,14 @@ function ModalEvento({ aberto, evento, onFechar, onSalvo, onDesatualizado }: Mod
           <Input placeholder="Ex.: Praça central, em frente à igreja" maxLength={LIMITES_EVENTO.localMax} />
         </Form.Item>
 
-        <Form.Item
-          label="URL da imagem"
-          name="imagemUrl"
-          extra="Opcional. Link de uma imagem já publicada (começando com http:// ou https://)."
-          rules={[
-            {
-              max: LIMITES_EVENTO.imagemUrlMax,
-              message: `A URL deve ter no máximo ${LIMITES_EVENTO.imagemUrlMax} caracteres.`,
-            },
-            {
-              validator: (_, valor?: string) =>
-                !valor || !valor.trim() || urlValida(valor.trim())
-                  ? Promise.resolve()
-                  : Promise.reject(new Error('Informe uma URL válida começando com http:// ou https://.')),
-            },
-          ]}
-        >
-          <Input placeholder="https://..." inputMode="url" />
+        <Form.Item label="Imagem" name="imagemUrl" extra="Opcional. Aparece no cartão do evento na página pública.">
+          {/* key: a cada abertura do modal o campo começa limpo (sem erro ou envio anterior) */}
+          <CampoImagem
+            key={`${aberto}-${evento?.id ?? 'novo'}`}
+            textoAlternativo={`Imagem do evento ${tituloDigitado?.trim() || 'novo'}`}
+            onEnviandoChange={setEnviandoImagem}
+          />
         </Form.Item>
-
-        {/* key: uma URL nova tenta carregar de novo, mesmo depois de uma que falhou */}
-        {previa && <PreviaImagem key={previa} url={previa} />}
       </Form>
     </Modal>
   )

@@ -29,6 +29,7 @@ import { diasDesde, formatarData, textoDiasDesde } from '../../utils/datas'
 import { mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { formatarTelefone, normalizar, rotulo, somenteDigitos } from '../../utils/texto'
 import { nomeArquivoTermo } from './nomeArquivoTermo'
+import { urlImagem } from '../../utils/imagem'
 
 const TAMANHO_PAGINA = 10
 
@@ -222,7 +223,7 @@ function Adocoes() {
         <Flex align="center" gap={12} style={{ minWidth: 160 }}>
           <Avatar
             size={44}
-            src={solicitacao.animal?.fotoUrl || undefined}
+            src={urlImagem(solicitacao.animal?.fotoUrl)}
             alt={solicitacao.animal?.nome}
             icon={<HeartOutlined />}
             style={{ flexShrink: 0, color: cores.teal, background: comOpacidade(cores.teal, 0.15) }}
