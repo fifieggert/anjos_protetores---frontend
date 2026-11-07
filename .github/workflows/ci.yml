@@ -1,4 +1,4 @@
-# CI do frontend: qualidade (lint + build com checagem de tipos), teste da imagem Docker
+# CI do frontend: qualidade (lint, testes com cobertura e build com checagem de tipos), teste da imagem Docker
 # (sem push) e análise no SonarCloud (só quando o segredo SONAR_TOKEN existir).
 # A publicação no ECR é o deploy.yml. Detalhes em docs/deploy-frontend.md.
 name: CI
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   qualidade:
-    name: Qualidade (lint e build)
+    name: Qualidade (lint, testes e build)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -39,12 +39,26 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # "tsc -b" (tipos) + "vite build". Ainda não há scripts de teste nem de typecheck
-      # separados; quando houver, entram aqui.
+      # Gera coverage/lcov.info, lido pelo job "sonar". Falha abaixo do mínimo de 25%.
+      - name: Testes com cobertura (mínimo de 25%)
+        run: npm run test:coverage
+
+      # "tsc -b" (tipos) + "vite build".
       - name: Build (inclui checagem de tipos)
         run: npm run build
         env:
           VITE_API_URL: /api
+
+      # Publica mesmo se um passo anterior falhar. Se os testes nem chegaram a rodar, não há
+      # coverage/: só um aviso, para o erro real continuar sendo o do passo que falhou.
+      - name: Publicar cobertura
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: warn
 
   docker:
     name: Imagem Docker (build e testes, sem push)
@@ -150,6 +164,13 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+
+      - name: Baixar cobertura
+        if: ${{ env.SONAR_TOKEN != '' }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage
+          path: coverage/
 
       - name: Análise SonarCloud
         if: ${{ env.SONAR_TOKEN != '' }}
