@@ -30,3 +30,16 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Testes
+
+Testes com [Vitest](https://vitest.dev) e [Testing Library](https://testing-library.com), na pasta `src/__tests__`. Só as bordas são falsas (axios ou services): nenhum teste acessa a rede nem lê o `.env`.
+
+```bash
+npm test                 # roda todos os testes
+npm run test:coverage    # roda com cobertura (resumo no terminal e coverage/lcov.info)
+npx vitest src/__tests__/pages/Login.test.tsx   # um arquivo, em modo watch
+npx tsc -p tsconfig.test.json                   # checa os tipos dos testes (o build não checa)
+```
+
+O `test:coverage` falha abaixo do mínimo de 25% de cobertura. O CI roda esse comando antes do build e envia o `coverage/lcov.info` para o SonarCloud.

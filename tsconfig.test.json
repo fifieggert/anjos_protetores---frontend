@@ -1,0 +1,11 @@
+{
+  // Checagem de tipos dos testes: fica fora do "tsc -b" (npm run build), então um erro de
+  // tipo em teste não derruba o build. Rodar com: npx tsc -p tsconfig.test.json
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["vite/client", "node", "@testing-library/jest-dom/vitest"]
+  },
+  "include": ["src"],
+  "exclude": []
+}
