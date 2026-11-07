@@ -115,21 +115,34 @@ describe('eventos', () => {
     const anterior = screen.getByRole('button', { name: 'Eventos anteriores' })
     const proximo = screen.getByRole('button', { name: 'Próximos eventos' })
     expect(screen.getByText('1–1 de 2')).toBeInTheDocument()
-    expect(anterior).toBeDisabled()
+    expect(anterior).toHaveAttribute('aria-disabled', 'true')
 
     await userEvent.click(proximo)
     expect(screen.getByText('2–2 de 2')).toBeInTheDocument()
-    expect(proximo).toBeDisabled()
+    expect(proximo).toHaveAttribute('aria-disabled', 'true')
+
+    await userEvent.click(proximo)
+    expect(screen.getByText('2–2 de 2')).toBeInTheDocument()
 
     await userEvent.click(anterior)
     expect(screen.getByText('1–1 de 2')).toBeInTheDocument()
 
-    const carrossel = document.querySelector<HTMLElement>('[aria-roledescription="carrossel"]')
-    carrossel?.focus()
+    proximo.focus()
     await userEvent.keyboard('{ArrowRight}')
     expect(screen.getByText('2–2 de 2')).toBeInTheDocument()
+    expect(proximo).toHaveFocus()
     await userEvent.keyboard('{ArrowLeft}')
     expect(screen.getByText('1–1 de 2')).toBeInTheDocument()
+  })
+
+  it('o carrossel não é uma parada de tabulação: o foco fica nas setas', async () => {
+    eventos.mockResolvedValue([evento('e1', 'Primeiro'), evento('e2', 'Segundo')])
+    renderComAuth(<Publico />)
+    await screen.findByRole('heading', { name: 'Primeiro' })
+
+    const carrossel = document.querySelector('[aria-roledescription="carrossel"]')
+
+    expect(carrossel).not.toHaveAttribute('tabindex')
   })
 
   it('com um evento só, não mostra as setas', async () => {

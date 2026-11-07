@@ -23,7 +23,7 @@ WORKDIR /app
 
 # Primeiro só os manifestos: a camada do "npm ci" fica em cache enquanto eles não mudarem.
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm ci --ignore-scripts --no-audit --no-fund
 
 COPY . .
 

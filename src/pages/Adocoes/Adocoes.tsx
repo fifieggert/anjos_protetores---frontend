@@ -28,6 +28,7 @@ import type { SolicitacaoAdocao, StatusSolicitacao } from '../../types/adocao'
 import { diasDesde, formatarData, textoDiasDesde } from '../../utils/datas'
 import { mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { formatarTelefone, normalizar, rotulo, somenteDigitos } from '../../utils/texto'
+import { nomeArquivoTermo } from './nomeArquivoTermo'
 
 const TAMANHO_PAGINA = 10
 
@@ -71,13 +72,6 @@ function nomeDoAnimal(solicitacao: SolicitacaoAdocao) {
 
 function podeGerarTermo(solicitacao: SolicitacaoAdocao) {
   return solicitacao.status === 'EM_CONTATO' || solicitacao.status === 'APROVADA'
-}
-
-function nomeArquivoTermo(nomeAnimal: string) {
-  const slug = normalizar(nomeAnimal)
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  return `termo-adocao-${slug || 'animal'}.pdf`
 }
 
 // Plano B quando o navegador bloqueia a nova aba: baixa o arquivo.
