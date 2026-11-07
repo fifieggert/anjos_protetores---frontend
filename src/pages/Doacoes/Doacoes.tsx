@@ -165,6 +165,9 @@ function Doacoes() {
         if (resSaidas.status === 'fulfilled') setSaidas(Array.isArray(resSaidas.value) ? resSaidas.value : [])
         else message.error(mensagemDeErro(resSaidas.reason, 'Não foi possível carregar as saídas.'))
       })
+      .catch((e: unknown) => {
+        if (ativo) message.error(mensagemDeErro(e, 'Não foi possível carregar os dados do estoque.'))
+      })
       .finally(() => {
         if (ativo) setCarregando(false)
       })

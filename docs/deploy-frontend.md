@@ -93,7 +93,7 @@ docker exec <container> id                    # uid=101(nginx): sem root
 Roda em pull requests e pushes para `develop` e `main`. Um push novo na mesma branch cancela
 a execução anterior.
 
-1. **Qualidade**: `npm ci`, `lint` e `build` (que inclui a checagem de tipos).
+1. **Qualidade**: `npm ci`, `lint`, testes com cobertura e `build` (que inclui a checagem de tipos).
 2. **Imagem Docker**: build da imagem (sem push), sobe o container e testa com `curl`:
    `/`, `/health` e uma rota inventada (`/animais/xyz`, fallback da SPA) dão 200; um asset
    inexistente dá 404; cache e gzip corretos; todos os headers de segurança presentes; sem
@@ -166,5 +166,5 @@ Para atualizar dependências, use o npm do Node do `.nvmrc` (npm 11) e confira d
 ```bash
 npx -y npm@11.19.1 install
 npm audit          # meta: 0 vulnerabilidades altas ou críticas
-npm run lint && npm run build
+npm run lint && npm test && npm run build
 ```
