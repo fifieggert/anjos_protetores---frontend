@@ -149,7 +149,10 @@ deploy do backend. Para usar uma imagem antiga direto na EC2, veja a seção *Ro
 | Variables | `VITE_WHATSAPP_ABRIGO` | Opcional: número do WhatsApp do abrigo |
 | Secrets | `SONAR_TOKEN` | Opcional: token do SonarCloud |
 
-A role só aceita execuções da branch `main` deste repositório e do backend.
+A role só aceita execuções da branch `main` deste repositório e do backend. Ela confere isso
+pelo campo `sub` do token do GitHub, que agora traz os IDs imutáveis do dono e do repositório
+(ID deste repositório: `1362871407`). O motivo, e como descobrir os IDs, está em
+`docs/deploy-aws.md` no backend, seção *Como a AWS reconhece o GitHub*.
 
 ## Lockfile e binários nativos
 
