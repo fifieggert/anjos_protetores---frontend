@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { AxiosError, CanceledError } from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CampoImagem from '../../components/CampoImagem/CampoImagem'
-import { mensagemErroUpload, validarArquivoImagem } from '../../components/CampoImagem/regras'
+import { ehEnvioCancelado, mensagemErroUpload, validarArquivoImagem } from '../../components/CampoImagem/regras'
 import { enviarImagem } from '../../services/imagens'
 import { erroAxios } from '../helpers/api'
 import { renderComAntd } from '../helpers/render'
@@ -81,7 +82,8 @@ describe('CampoImagem', () => {
 
     await usuario().upload(entrada(), foto)
 
-    expect(enviar).toHaveBeenCalledExactlyOnceWith(foto)
+    expect(enviar).toHaveBeenCalledExactlyOnceWith(foto, expect.any(AbortSignal))
+    expect(enviar.mock.calls[0]?.[1]?.aborted).toBe(false)
     expect(aoMudar).toHaveBeenCalledExactlyOnceWith(URL_NOVA)
     expect(await screen.findByRole('img', { name: 'Foto de Rex' })).toHaveAttribute('src', URL_NOVA)
     expect(screen.getByRole('button', { name: 'Trocar foto' })).toBeInTheDocument()
@@ -181,7 +183,7 @@ describe('CampoImagem', () => {
     expect(mensagemErroUpload(new Error('qualquer'))).toBe('Não foi possível enviar a foto. Tente novamente.')
   })
 
-  it('durante o envio: "Enviando...", sem remover e sem segundo envio (duplo clique)', async () => {
+  it('durante o envio: "Enviando..." e duplo clique não abre o seletor de novo', async () => {
     let concluir: (url: string) => void = () => undefined
     enviar.mockImplementation(() => new Promise((resolver) => (concluir = resolver)))
     const cliqueNoSeletor = vi.spyOn(HTMLInputElement.prototype, 'click')
@@ -191,10 +193,8 @@ describe('CampoImagem', () => {
     await user.upload(entrada(), png())
 
     const botao = screen.getByRole('button', { name: /Enviando/ })
-    expect(screen.getByRole('button', { name: 'Remover foto' })).toBeDisabled()
     cliqueNoSeletor.mockClear()
     await user.dblClick(botao)
-    fireEvent.change(entrada(), { target: { files: [png()] } })
     expect(cliqueNoSeletor).not.toHaveBeenCalled()
     expect(enviar).toHaveBeenCalledOnce()
 
@@ -267,7 +267,7 @@ describe('CampoImagem', () => {
     expect(alerta()).not.toBeInTheDocument()
   })
 
-  it('desmontado no meio do envio (modal fechado): ignora o resultado e libera o formulário', async () => {
+  it('desmontado no meio do envio (modal fechado), com resposta que chega mesmo assim: ignora o resultado e libera o formulário', async () => {
     let concluir: (url: string) => void = () => undefined
     enviar.mockImplementation(() => new Promise((resolver) => (concluir = resolver)))
     const aoMudar = vi.fn()
@@ -299,6 +299,145 @@ describe('CampoImagem', () => {
 
     expect(screen.getByRole('button', { name: 'Trocar foto' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Remover foto' })).toBeDisabled()
+  })
+})
+
+// Envio pendente que se comporta como o axios com AbortSignal: ao abortar, rejeita com
+// CanceledError. Cada envio guarda o sinal e as funções para concluir ou falhar.
+function enviosControlados() {
+  const envios: { sinal: AbortSignal; concluir: (url: string) => void; falhar: (erro: unknown) => void }[] = []
+  enviar.mockImplementation(
+    (_arquivo, sinal) =>
+      new Promise<string>((resolver, rejeitar) => {
+        envios.push({ sinal: sinal!, concluir: resolver, falhar: rejeitar })
+        sinal?.addEventListener('abort', () => rejeitar(new CanceledError()))
+      }),
+  )
+  return envios
+}
+
+describe('CampoImagem: cancelamento do envio (AbortController)', () => {
+  it('desmontar durante o envio aborta o signal, sem erro, sem onChange e liberando o formulário', async () => {
+    const envios = enviosControlados()
+    const aoMudar = vi.fn()
+    const aoEnviar = vi.fn()
+    const erroConsole = vi.spyOn(console, 'error')
+    const { unmount } = renderComAntd(<Campo aoMudar={aoMudar} aoEnviar={aoEnviar} />)
+
+    await usuario().upload(entrada(), png())
+    expect(envios[0]?.sinal.aborted).toBe(false)
+
+    unmount()
+    await act(async () => undefined)
+
+    expect(envios[0]?.sinal.aborted).toBe(true)
+    expect(aoMudar).not.toHaveBeenCalled()
+    expect(aoEnviar.mock.calls).toEqual([[true], [false]])
+    // nenhuma atualização de estado depois de desmontado (o React avisaria no console)
+    expect(erroConsole).not.toHaveBeenCalled()
+  })
+
+  it('remover durante o envio cancela: sem mensagem de erro, sem valor novo e com o Salvar liberado', async () => {
+    const envios = enviosControlados()
+    const aoMudar = vi.fn()
+    const aoEnviar = vi.fn()
+    renderComAntd(<Campo inicial={URL_ANTIGA} aoMudar={aoMudar} aoEnviar={aoEnviar} />)
+
+    await usuario().upload(entrada(), png())
+    await usuario().click(screen.getByRole('button', { name: 'Remover foto' }))
+
+    expect(envios[0]?.sinal.aborted).toBe(true)
+    // só o null da remoção, nunca a url do envio cancelado
+    expect(aoMudar.mock.calls).toEqual([[null]])
+    expect(aoEnviar.mock.calls).toEqual([[true], [false]])
+    expect(await screen.findByRole('button', { name: 'Enviar foto' })).toBeEnabled()
+    expect(alerta()).not.toBeInTheDocument()
+    expect(screen.getByText('Foto removida.')).toBeInTheDocument()
+  })
+
+  it.each([
+    ['CanceledError (axios.isCancel)', () => new CanceledError()],
+    ['AxiosError com código ERR_CANCELED', () => new AxiosError('qualquer texto', 'ERR_CANCELED')],
+  ])('envio cancelado por fora (%s): sem erro, sem onChange e onEnviandoChange(false)', async (_caso, criarErro) => {
+    enviar.mockRejectedValue(criarErro())
+    const aoMudar = vi.fn()
+    const aoEnviar = vi.fn()
+    renderComAntd(<Campo inicial={URL_ANTIGA} aoMudar={aoMudar} aoEnviar={aoEnviar} />)
+
+    await usuario().upload(entrada(), png())
+
+    await waitFor(() => expect(aoEnviar.mock.calls).toEqual([[true], [false]]))
+    expect(alerta()).not.toBeInTheDocument()
+    expect(aoMudar).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Trocar foto' })).toBeEnabled()
+    expect(screen.getByRole('img', { name: 'Foto de Rex' })).toHaveAttribute('src', URL_ANTIGA)
+  })
+
+  it('novo envio aborta o anterior; vale só o resultado do mais novo', async () => {
+    const envios = enviosControlados()
+    const aoMudar = vi.fn()
+    const aoEnviar = vi.fn()
+    renderComAntd(<Campo aoMudar={aoMudar} aoEnviar={aoEnviar} />)
+
+    await usuario().upload(entrada(), png())
+    const segunda = arquivo('outra.jpg', 'image/jpeg')
+    fireEvent.change(entrada(), { target: { files: [segunda] } })
+
+    expect(enviar).toHaveBeenCalledTimes(2)
+    expect(enviar.mock.calls[1]?.[0]).toBe(segunda)
+    expect(envios[0]?.sinal.aborted).toBe(true)
+    expect(envios[1]?.sinal.aborted).toBe(false)
+    // o anterior foi cancelado: nada de erro, e o campo continua "enviando" pelo novo
+    await act(async () => undefined)
+    expect(alerta()).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Enviando/ })).toBeInTheDocument()
+
+    await act(async () => envios[1]?.concluir(URL_NOVA))
+
+    expect(aoMudar).toHaveBeenCalledExactlyOnceWith(URL_NOVA)
+    expect(await screen.findByRole('img', { name: 'Foto de Rex' })).toHaveAttribute('src', URL_NOVA)
+    expect(aoEnviar.mock.calls.at(-1)).toEqual([false])
+    expect(screen.getByRole('button', { name: 'Trocar foto' })).toBeEnabled()
+  })
+
+  it('resposta atrasada de um envio já trocado é ignorada', async () => {
+    // envio que NÃO respeita o sinal (a resposta já estava a caminho quando o abort aconteceu)
+    const pendentes: ((url: string) => void)[] = []
+    enviar.mockImplementation(() => new Promise((resolver) => pendentes.push(resolver)))
+    const aoMudar = vi.fn()
+    renderComAntd(<Campo aoMudar={aoMudar} />)
+
+    await usuario().upload(entrada(), png())
+    fireEvent.change(entrada(), { target: { files: [arquivo('outra.jpg', 'image/jpeg')] } })
+    await act(async () => pendentes[0]?.('/api/imagens/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png'))
+
+    expect(aoMudar).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /Enviando/ })).toBeInTheDocument()
+
+    await act(async () => pendentes[1]?.(URL_NOVA))
+    expect(aoMudar).toHaveBeenCalledExactlyOnceWith(URL_NOVA)
+  })
+
+  it('erro de um envio já trocado não aparece', async () => {
+    const envios = enviosControlados()
+    renderComAntd(<Campo />)
+
+    await usuario().upload(entrada(), png())
+    fireEvent.change(entrada(), { target: { files: [arquivo('outra.jpg', 'image/jpeg')] } })
+    // o primeiro falha depois de já ter sido trocado (ex.: erro de rede chegou atrasado)
+    await act(async () => envios[0]?.falhar(erroAxios(500)))
+
+    expect(alerta()).not.toBeInTheDocument()
+  })
+})
+
+describe('ehEnvioCancelado', () => {
+  it('reconhece só o cancelamento do axios, pelo tipo ou código (não pelo texto)', () => {
+    expect(ehEnvioCancelado(new CanceledError())).toBe(true)
+    expect(ehEnvioCancelado(new AxiosError('x', 'ERR_CANCELED'))).toBe(true)
+    expect(ehEnvioCancelado(erroAxios())).toBe(false)
+    expect(ehEnvioCancelado(erroAxios(500))).toBe(false)
+    expect(ehEnvioCancelado(new Error('canceled'))).toBe(false)
   })
 })
 

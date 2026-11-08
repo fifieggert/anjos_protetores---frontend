@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { api } from '../../services/api'
 import { enviarImagem } from '../../services/imagens'
@@ -49,6 +50,29 @@ describe('enviarImagem', () => {
     adapter.mockImplementation(falhaDeRede())
 
     await expect(enviarImagem(foto())).rejects.toMatchObject({ code: 'ERR_NETWORK' })
+  })
+
+  it('repassa o AbortSignal ao axios (sem sinal, nenhum é enviado)', async () => {
+    adapter.mockImplementation(respondeOk({ url: URL_IMAGEM }, 201))
+    const controle = new AbortController()
+
+    await enviarImagem(foto(), controle.signal)
+    await enviarImagem(foto())
+
+    expect(adapter.mock.calls[0]?.[0].signal).toBe(controle.signal)
+    expect(adapter.mock.calls[1]?.[0].signal).toBeUndefined()
+  })
+
+  it('sinal abortado: o axios rejeita com cancelamento (ERR_CANCELED) e nada é enviado', async () => {
+    adapter.mockImplementation(respondeOk({ url: URL_IMAGEM }, 201))
+    const controle = new AbortController()
+    controle.abort()
+
+    const erro = await enviarImagem(foto(), controle.signal).catch((e: unknown) => e)
+
+    expect(axios.isCancel(erro)).toBe(true)
+    expect(erro).toMatchObject({ code: 'ERR_CANCELED' })
+    expect(adapter).not.toHaveBeenCalled()
   })
 
   it.each([null, {}, { url: '' }, { url: 42 }])('resposta sem url (%j) vira erro', async (resposta) => {

@@ -22,6 +22,12 @@ export function validarArquivoImagem(arquivo: File): string | null {
   return null
 }
 
+// Envio cancelado por nós (AbortController): não é erro e não gera mensagem para o usuário.
+// Pelo tipo/código do axios, nunca pelo texto da mensagem.
+export function ehEnvioCancelado(erro: unknown): boolean {
+  return axios.isCancel(erro) || (axios.isAxiosError(erro) && erro.code === 'ERR_CANCELED')
+}
+
 // Mensagem do servidor ({ error }), se houver.
 function mensagemDoServidor(erro: unknown) {
   const mensagem = dadosDoErro(erro)?.error

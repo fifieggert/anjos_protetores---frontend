@@ -5,7 +5,7 @@ import { DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { enviarImagem } from '../../services/imagens'
 import { cores } from '../../theme/cores'
 import { urlImagem } from '../../utils/imagem'
-import { TIPOS_ACEITOS, mensagemErroUpload, validarArquivoImagem } from './regras'
+import { TIPOS_ACEITOS, ehEnvioCancelado, mensagemErroUpload, validarArquivoImagem } from './regras'
 
 // Texto só para leitores de tela (anúncios de "enviando", "enviada", "removida").
 const SOMENTE_LEITOR: CSSProperties = {
@@ -35,11 +35,12 @@ export interface CampoImagemProps {
 // blob: local), então a CSP não precisa liberar blob:.
 function CampoImagem({ value, onChange, id, textoAlternativo, disabled, onEnviandoChange }: CampoImagemProps) {
   const entrada = useRef<HTMLInputElement>(null)
-  // ref, além do estado: dois cliques seguidos chegam antes de o React atualizar o "enviando"
-  const enviandoAgora = useRef(false)
-  // Desmontado (ex.: modal fechado ou reaberto para outro cadastro): o resultado de um envio
-  // ainda em andamento é ignorado, para não cair no formulário errado.
-  const montado = useRef(false)
+  // Envio em andamento (null = nenhum). Um AbortController NOVO a cada envio (criar na
+  // montagem quebraria no StrictMode, que monta, desmonta e monta de novo em dev). É ref, além
+  // do estado "enviando", porque dois cliques seguidos chegam antes de o React atualizar.
+  // Só o envio que ainda é o atual pode mexer no formulário: um envio cancelado, trocado por
+  // outro ou de um componente desmontado (modal fechado) é ignorado mesmo se a resposta chegar.
+  const envioAtual = useRef<AbortController | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [anuncio, setAnuncio] = useState('')
@@ -54,19 +55,29 @@ function CampoImagem({ value, onChange, id, textoAlternativo, disabled, onEnvian
     avisarEnvio.current = onEnviandoChange
   }, [onEnviandoChange])
 
-  useEffect(() => {
-    montado.current = true
-    return () => {
-      montado.current = false
-      if (enviandoAgora.current) avisarEnvio.current?.(false)
-    }
-  }, [])
+  // Cancela o envio em andamento, se houver. Devolve true se havia um.
+  function cancelarEnvio() {
+    const controle = envioAtual.current
+    if (!controle) return false
+    envioAtual.current = null
+    controle.abort()
+    return true
+  }
+
+  // Desmontagem (ex.: modal fechado): cancela o envio, para a imagem não ficar no servidor sem
+  // uso, e libera o botão Salvar do formulário. Nenhum estado é atualizado depois disso.
+  useEffect(
+    () => () => {
+      if (cancelarEnvio()) avisarEnvio.current?.(false)
+    },
+    [],
+  )
 
   const src = urlImagem(value)
   const mostrarPrevia = src !== undefined && src !== srcQueFalhou
 
   function abrirSeletor() {
-    if (enviandoAgora.current) return
+    if (envioAtual.current) return
     entrada.current?.click()
   }
 
@@ -74,7 +85,7 @@ function CampoImagem({ value, onChange, id, textoAlternativo, disabled, onEnvian
     const arquivo = evento.target.files?.[0]
     // limpa a seleção: escolher o mesmo arquivo de novo dispara o onChange outra vez
     evento.target.value = ''
-    if (!arquivo || enviandoAgora.current) return
+    if (!arquivo) return
 
     const motivo = validarArquivoImagem(arquivo)
     if (motivo) {
@@ -83,24 +94,29 @@ function CampoImagem({ value, onChange, id, textoAlternativo, disabled, onEnvian
       return
     }
 
-    enviandoAgora.current = true
+    // outro arquivo escolhido durante um envio: o anterior é cancelado e vale o mais novo
+    cancelarEnvio()
+    const controle = new AbortController()
+    envioAtual.current = controle
     setEnviando(true)
     onEnviandoChange?.(true)
     setErro(null)
     setAnuncio('Enviando a foto...')
     try {
-      const url = await enviarImagem(arquivo)
-      if (!montado.current) return
+      const url = await enviarImagem(arquivo, controle.signal)
+      if (envioAtual.current !== controle) return
       onChange?.(url)
       setAnuncio('Foto enviada.')
     } catch (e) {
-      if (!montado.current) return
+      // cancelamento não é erro: sem mensagem
+      if (envioAtual.current !== controle || ehEnvioCancelado(e)) return
       setErro(mensagemErroUpload(e))
       setAnuncio('')
     } finally {
-      const aindaMontado = montado.current
-      enviandoAgora.current = false
-      if (aindaMontado) {
+      // Só o envio atual encerra o "enviando". Cancelado por remover() ou pela desmontagem,
+      // quem cancelou já avisou; trocado por outro envio, o novo continua "enviando".
+      if (envioAtual.current === controle) {
+        envioAtual.current = null
         setEnviando(false)
         onEnviandoChange?.(false)
       }
@@ -108,6 +124,11 @@ function CampoImagem({ value, onChange, id, textoAlternativo, disabled, onEnvian
   }
 
   function remover() {
+    // remover durante um envio: cancela o envio e libera o formulário
+    if (cancelarEnvio()) {
+      setEnviando(false)
+      onEnviandoChange?.(false)
+    }
     onChange?.(null)
     setErro(null)
     setAnuncio('Foto removida.')
@@ -150,7 +171,7 @@ function CampoImagem({ value, onChange, id, textoAlternativo, disabled, onEnvian
           {enviando ? 'Enviando...' : value ? 'Trocar foto' : 'Enviar foto'}
         </Button>
         {value && (
-          <Button danger icon={<DeleteOutlined aria-hidden />} disabled={disabled || enviando} onClick={remover}>
+          <Button danger icon={<DeleteOutlined aria-hidden />} disabled={disabled} onClick={remover}>
             Remover foto
           </Button>
         )}
