@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Avatar, Badge, Button, Drawer, Dropdown, Grid, Input, Layout, Menu, Typography } from 'antd'
+import { Avatar, Button, Drawer, Dropdown, Grid, Input, Layout, Menu, Typography } from 'antd'
 import type { MenuProps } from 'antd'
 import {
-  BellOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   DashboardOutlined,
@@ -358,53 +357,42 @@ function AppLayout() {
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <Badge dot color={cores.laranja} offset={[-8, 8]}>
-              <Button
-                type="text"
-                shape="circle"
-                icon={<BellOutlined style={{ fontSize: 18 }} />}
-                aria-label="Notificações"
-              />
-            </Badge>
+          {/* nome e avatar abrem o menu da conta (alterar senha, sair) */}
+          <Dropdown menu={menuUsuario} trigger={['click']} placement="bottomRight">
+            <button
+              type="button"
+              aria-label={`Menu da conta de ${nome}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                padding: 0,
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                font: 'inherit',
+              }}
+            >
+              {telas.sm && (
+                <div style={{ textAlign: 'right', lineHeight: 1.25 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: cores.texto }}>{nome}</div>
+                  <div style={{ fontSize: 12, color: cores.textoSecundario }}>{perfil}</div>
+                </div>
+              )}
 
-            {/* nome e avatar abrem o menu da conta (alterar senha, sair) */}
-            <Dropdown menu={menuUsuario} trigger={['click']} placement="bottomRight">
-              <button
-                type="button"
-                aria-label={`Menu da conta de ${nome}`}
+              <Avatar
+                size={40}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: 0,
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  font: 'inherit',
+                  flexShrink: 0,
+                  fontWeight: 700,
+                  color: cores.teal,
+                  background: comOpacidade(cores.teal, 0.2),
                 }}
               >
-                {telas.sm && (
-                  <div style={{ textAlign: 'right', lineHeight: 1.25 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: cores.texto }}>{nome}</div>
-                    <div style={{ fontSize: 12, color: cores.textoSecundario }}>{perfil}</div>
-                  </div>
-                )}
-
-                <Avatar
-                  size={40}
-                  style={{
-                    flexShrink: 0,
-                    fontWeight: 700,
-                    color: cores.teal,
-                    background: comOpacidade(cores.teal, 0.2),
-                  }}
-                >
-                  {iniciais(nome)}
-                </Avatar>
-              </button>
-            </Dropdown>
-          </div>
+                {iniciais(nome)}
+              </Avatar>
+            </button>
+          </Dropdown>
         </Header>
 
         <Content style={{ padding: espacamento, background: cores.fundo }}>
