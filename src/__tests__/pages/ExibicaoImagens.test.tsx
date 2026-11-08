@@ -26,6 +26,22 @@ describe('FotoAnimal (cartão e modal da página pública)', () => {
     expect(screen.getByRole('img', { name: 'Rex (sem foto)' })).toBeInTheDocument()
   })
 
+  // Verificação direta no DOM: pega TODAS as <img> (inclusive com alt vazio ou outro alt).
+  it('URL javascript: nunca vira <img src>, com qualquer alt', () => {
+    const { container } = render(<FotoAnimal url="javascript:alert(1)" nome="Rex" />)
+
+    const imagens = [...container.querySelectorAll('img')]
+    expect(imagens.filter((img) => img.getAttribute('src')?.includes('javascript:'))).toEqual([])
+    expect(imagens).toHaveLength(0)
+  })
+
+  it('controle positivo: com URL válida, a <img> é renderizada com o src', () => {
+    const { container } = render(<FotoAnimal url={CAMINHO} nome="Rex" />)
+
+    const imagens = [...container.querySelectorAll('img')]
+    expect(imagens.map((img) => img.getAttribute('src'))).toEqual([CAMINHO])
+  })
+
   it('foto que não carrega vira a imagem padrão', () => {
     render(<FotoAnimal url={CAMINHO} nome="Rex" />)
 
@@ -70,9 +86,21 @@ describe('SecaoEventos', () => {
   it('imagemUrl inválida não vira <img>', async () => {
     vi.mocked(listarEventosPublicos).mockResolvedValue([{ ...evento, imagemUrl: 'javascript:alert(1)' }])
 
-    renderComAntd(<SecaoEventos />)
+    const { container } = renderComAntd(<SecaoEventos />)
 
     expect(await screen.findByText('Feira de adoção')).toBeInTheDocument()
-    expect(screen.queryByRole('img', { name: 'Imagem do evento Feira de adoção' })).not.toBeInTheDocument()
+    // TODAS as <img> do container (querySelectorAll inclui alt=""), não só as com aquele nome
+    const imagens = [...container.querySelectorAll('img')]
+    expect(imagens.filter((img) => img.getAttribute('src')?.includes('javascript:'))).toEqual([])
+  })
+
+  it('controle positivo: com imagemUrl válida, uma <img> é renderizada com o src', async () => {
+    vi.mocked(listarEventosPublicos).mockResolvedValue([evento])
+
+    const { container } = renderComAntd(<SecaoEventos />)
+
+    expect(await screen.findByText('Feira de adoção')).toBeInTheDocument()
+    const srcs = [...container.querySelectorAll('img')].map((img) => img.getAttribute('src'))
+    expect(srcs).toContain(CAMINHO)
   })
 })
