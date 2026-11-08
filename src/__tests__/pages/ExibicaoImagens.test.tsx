@@ -35,12 +35,20 @@ describe('FotoAnimal (cartão e modal da página pública)', () => {
   })
 })
 
+function dataFutura(dias = 30) {
+  const d = new Date()
+  d.setDate(d.getDate() + dias)
+  const mes = String(d.getMonth() + 1).padStart(2, '0')
+  const dia = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${mes}-${dia}`
+}
+
 describe('SecaoEventos', () => {
   const evento: EventoPublico = {
     id: 'e1',
     titulo: 'Feira de adoção',
     descricao: null,
-    data: '2026-11-14',
+    data: dataFutura(),
     horarioInicio: '09:00',
     horarioFim: null,
     local: 'Praça Central',
