@@ -6,6 +6,7 @@ import { listarEventosPublicos } from '../../services/publico'
 import { cores } from '../../theme/cores'
 import type { EventoPublico } from '../../types/publico'
 import { diaDaApi, diaDaSemana, mesAbreviado, textoHorario } from '../../utils/datas'
+import { urlImagem } from '../../utils/imagem'
 
 // Seta na ponta do carrossel: aria-disabled em vez de disabled, porque um botão desabilitado
 // perde o foco e o teclado deixaria de mover o carrossel. O clique não faz nada (mover limita).
@@ -14,16 +15,18 @@ const ESTILO_SETA_NO_LIMITE: CSSProperties = { opacity: 0.45, cursor: 'not-allow
 function CartaoEvento({ evento }: { evento: EventoPublico }) {
   const [imagemFalhou, setImagemFalhou] = useState(false)
   const dia = diaDaApi(evento.data)
+  // caminho do upload (/api/imagens/...) ou link externo http(s)
+  const imagem = urlImagem(evento.imagemUrl)
 
   return (
     <Card
       style={{ overflow: 'hidden' }}
       styles={{ body: { padding: 20 } }}
       cover={
-        evento.imagemUrl && !imagemFalhou ? (
+        imagem && !imagemFalhou ? (
           <img
             className="pub-capa"
-            src={evento.imagemUrl}
+            src={imagem}
             alt={`Imagem do evento ${evento.titulo}`}
             loading="lazy"
             onError={() => setImagemFalhou(true)}

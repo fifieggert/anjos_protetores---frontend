@@ -96,6 +96,10 @@ describe('permissões por perfil', () => {
   })
 })
 
+// Os três testes mais longos do arquivo (5 a 10 s sozinhos) passam dos 20 s do testTimeout
+// quando rodam com cobertura e todos os arquivos em paralelo (test:coverage).
+const TIMEOUT_TELA_COMPLETA = 60_000
+
 describe('login completo', () => {
   it('voluntário entra e cai na lista de animais', async () => {
     const adapter = mockarAdapter(api)
@@ -112,7 +116,7 @@ describe('login completo', () => {
 
     await screen.findByRole('button', { name: 'Abrir menu' })
     expect(window.location.pathname).toBe('/animais')
-  })
+  }, TIMEOUT_TELA_COMPLETA)
 
   it('sessão que expira no servidor (401) volta ao login', async () => {
     mockarAdapter(api).mockImplementation((config) =>
@@ -166,7 +170,7 @@ describe('menu lateral', () => {
     const card = await screen.findByRole('button', { name: 'Ver itens com estoque baixo' })
     expect(within(card).getByText('Estoque baixo')).toBeInTheDocument()
     expect(card.textContent?.indexOf('Ração')).toBeLessThan(card.textContent?.indexOf('Areia') ?? -1)
-  })
+  }, TIMEOUT_TELA_COMPLETA)
 
   it('sem alertas, o card diz que o estoque está em dia', async () => {
     abrir('/animais', 'ADMIN')
@@ -184,5 +188,5 @@ describe('menu lateral', () => {
 
     expect(localStorage.getItem('token')).toBeNull()
     expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeInTheDocument()
-  })
+  }, TIMEOUT_TELA_COMPLETA)
 })

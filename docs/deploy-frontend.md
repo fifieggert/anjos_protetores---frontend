@@ -44,9 +44,15 @@ A imagem final roda como o usuário `nginx` (UID 101, **sem root**) e tem `HEALT
 
 **CSP (Content-Security-Policy):** `frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'`.
 Ela **não** restringe scripts, estilos nem imagens, porque o Ant Design usa estilos inline
-e as fotos dos animais e eventos vêm de links externos. Ela só impede o site de ser
+e cadastros antigos ainda podem ter foto em link externo. Ela só impede o site de ser
 exibido dentro de outro (clickjacking), bloqueia plugins e impede a troca do endereço base
 dos links e o envio de formulários para outros domínios.
+
+**Fotos enviadas pelo sistema (upload):** ficam no S3 e são servidas pela API em
+`/api/imagens/<arquivo>`, no mesmo domínio. A CSP não mudou por causa do upload: a
+pré-visualização no formulário usa o endereço devolvido pelo servidor, e não uma URL `blob:`
+local, então nada precisa ser liberado. Se um dia a CSP ganhar `img-src`, ela precisa
+permitir `'self'` (fotos enviadas) e, enquanto existirem, os domínios das fotos antigas.
 
 ### Variáveis de build
 
@@ -55,7 +61,7 @@ gerar a imagem de novo; `docker run -e` não tem efeito.
 
 | Variável (`--build-arg`) | Padrão | Para que serve |
 |---|---|---|
-| `VITE_API_URL` | `/api` | Endereço da API. Em produção, sempre `/api` (mesmo domínio) |
+| `VITE_API_URL` | `/api` | Endereço da API. Em produção, sempre `/api` (mesmo domínio). As fotos enviadas (`/api/imagens/...`) são exibidas a partir dele: relativo no mesmo domínio, absoluto no desenvolvimento (`http://localhost:4000/api`, ver `src/utils/imagem.ts`) |
 | `VITE_WHATSAPP_ABRIGO` | vazio | WhatsApp do abrigo (somente dígitos, com 55 e DDD). Vazio esconde os botões de WhatsApp da página pública |
 
 No deploy, `VITE_WHATSAPP_ABRIGO` vem da **variável** de repositório de mesmo nome

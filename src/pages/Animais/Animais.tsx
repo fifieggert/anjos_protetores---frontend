@@ -37,7 +37,9 @@ import { atualizarAnimal, criarAnimal, excluirAnimal, listarAnimais } from '../.
 import { cores, comOpacidade, coresStatusAnimal } from '../../theme/cores'
 import { errosDosCampos, mensagemDeErro, statusDoErro } from '../../utils/erros'
 import { diaDaApi, diaFuturo, diaParaApi, formatarDia, FORMATO_DATA } from '../../utils/datas'
-import { formatarIdade, normalizar, rotulo, urlValida } from '../../utils/texto'
+import { formatarIdade, normalizar, rotulo } from '../../utils/texto'
+import { urlImagem } from '../../utils/imagem'
+import CampoImagem from '../../components/CampoImagem/CampoImagem'
 import {
   ESPECIES,
   PORTES,
@@ -64,7 +66,8 @@ interface CamposAnimal {
   idade?: number | null
   // Na edição de um animal reservado, mostra EM_ESPERA (campo desabilitado, nunca enviado).
   status?: StatusAnimal
-  fotoUrl?: string
+  // caminho devolvido pelo upload (ou URL antiga); null = foto removida
+  fotoUrl?: string | null
   descricao?: string
   sexo?: Sexo
   castrado: boolean
@@ -172,6 +175,7 @@ function Animais() {
   const [form] = Form.useForm<CamposAnimal>()
   const castrado = Form.useWatch('castrado', form)
   const vacinado = Form.useWatch('vacinado', form)
+  
 
   const [animais, setAnimais] = useState<Animal[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -183,6 +187,8 @@ function Animais() {
   const [modalAberto, setModalAberto] = useState(false)
   const [editando, setEditando] = useState<Animal | null>(null)
   const [salvando, setSalvando] = useState(false)
+  // enquanto a foto sobe, o botão de salvar espera (senão o animal seria salvo sem ela)
+  const [enviandoFoto, setEnviandoFoto] = useState(false)
   const [excluindoId, setExcluindoId] = useState<string | null>(null)
 
   // Incrementar a versão refaz a busca da lista.
@@ -313,7 +319,7 @@ function Animais() {
       render: (_, animal) => (
         <Avatar
           size={44}
-          src={animal.fotoUrl || undefined}
+          src={urlImagem(animal.fotoUrl)}
           alt={animal.nome}
           icon={<HeartOutlined />}
           style={{ color: cores.teal, background: comOpacidade(cores.teal, 0.15) }}
@@ -519,6 +525,7 @@ function Animais() {
         okText={editando ? 'Salvar' : 'Cadastrar'}
         cancelText="Cancelar"
         confirmLoading={salvando}
+        okButtonProps={{ disabled: enviandoFoto }}
         cancelButtonProps={{ disabled: salvando }}
         maskClosable={!salvando}
         forceRender
@@ -664,20 +671,16 @@ function Animais() {
             )}
           </Flex>
 
-          <Form.Item
-            label="URL da foto"
-            name="fotoUrl"
-            rules={[
-              { max: MAX_TEXTO, message: `A URL deve ter no máximo ${MAX_TEXTO} caracteres.` },
-              {
-                validator: (_, valor?: string) =>
-                  !valor || !valor.trim() || urlValida(valor.trim())
-                    ? Promise.resolve()
-                    : Promise.reject(new Error('Informe uma URL válida começando com http:// ou https://.')),
-              },
-            ]}
-          >
-            <Input placeholder="https://..." inputMode="url" />
+          <Form.Item noStyle dependencies={['nome']}>
+            {({ getFieldValue }) => (
+              <Form.Item label="Foto" name="fotoUrl">
+                <CampoImagem
+                  key={`${modalAberto}-${editando?.id ?? 'novo'}`}
+                  textoAlternativo={`Foto de ${(getFieldValue('nome') as string | undefined)?.trim() || 'animal'}`}
+                  onEnviandoChange={setEnviandoFoto}
+                />
+              </Form.Item>
+            )}
           </Form.Item>
 
           <Form.Item
