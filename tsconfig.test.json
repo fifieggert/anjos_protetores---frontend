@@ -1,6 +1,9 @@
 {
-  // Checagem de tipos dos testes: fica fora do "tsc -b" (npm run build), então um erro de
-  // tipo em teste não derruba o build. Rodar com: npx tsc -p tsconfig.test.json
+  // Checagem de tipos dos testes: fica fora do "tsc -b" do npm run build (que compila só
+  // app e node), então um erro de tipo em teste não derruba o build. Rodar com:
+  // npx tsc -p tsconfig.test.json
+  // Está nas references do tsconfig.json para o editor usar esta config nos testes (sem isso,
+  // ele não carrega os tipos do jest-dom e acusa toBeInTheDocument, toHaveAttribute...).
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
