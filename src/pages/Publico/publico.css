@@ -204,6 +204,11 @@
 
 .pub-hero-conteudo {
   position: relative;
+  /* hero centralizado: selo, título, subtítulo, botões e a ilustração embaixo */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .pub-selo {
@@ -220,8 +225,22 @@
 
 .pub-hero-titulo.ant-typography {
   margin: 20px 0 16px;
-  font-size: clamp(36px, 6vw, 60px);
+  font-size: clamp(32px, 6vw, 60px);
   line-height: 1.1;
+  max-width: 820px;
+}
+
+.pub-hero-subtitulo.ant-typography {
+  font-size: 18px;
+  color: #657383; /* cores.textoSecundario */
+  max-width: 600px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+  .pub-hero-subtitulo.ant-typography {
+    font-size: 16px;
+  }
 }
 
 /* destaque sublinhado: legível em qualquer fundo, sem depender do contraste da cor */
@@ -230,49 +249,45 @@
   padding-inline: 2px;
 }
 
-.pub-hero-imagem {
+.pub-hero-moldura {
   position: relative;
-  border-radius: 32px;
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-  box-shadow: 0 24px 60px rgba(23, 40, 57, 0.18);
+  width: 100%;
+  max-width: 900px;
+  margin-top: 40px;
 }
 
 @media (min-width: 992px) {
-  .pub-hero-imagem {
-    aspect-ratio: 1 / 1;
+  .pub-hero-moldura {
+    margin-top: 56px;
   }
 }
 
-.pub-hero-imagem img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
+/* PNG/WebP com fundo transparente: some no fundo da página, sem retângulo em volta */
+.pub-hero-ilustracao {
   display: block;
+  width: 100%;
+  height: auto;
 }
 
-.pub-hero-moldura {
-  position: relative;
-  padding-bottom: 24px;
-}
-
+/* No celular o selo vai centralizado abaixo da ilustração (não cobre os cães);
+   a partir do tablet flutua sobre o canto inferior esquerdo. */
 .pub-selo-flutuante {
-  position: absolute;
-  left: 16px;
-  bottom: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 12px;
+  margin-top: 16px;
   padding: 12px 18px;
   border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 12px 32px rgba(23, 40, 57, 0.16);
 }
 
-@media (min-width: 992px) {
+@media (min-width: 768px) {
   .pub-selo-flutuante {
-    left: -24px;
+    position: absolute;
+    left: 0;
+    bottom: 8px;
+    margin-top: 0;
   }
 }
 
