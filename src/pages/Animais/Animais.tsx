@@ -175,7 +175,7 @@ function Animais() {
   const [form] = Form.useForm<CamposAnimal>()
   const castrado = Form.useWatch('castrado', form)
   const vacinado = Form.useWatch('vacinado', form)
-  const nomeDigitado = Form.useWatch('nome', form)
+  
 
   const [animais, setAnimais] = useState<Animal[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -671,13 +671,16 @@ function Animais() {
             )}
           </Flex>
 
-          <Form.Item label="Foto" name="fotoUrl">
-            {/* key: a cada abertura do modal o campo começa limpo (sem erro ou envio anterior) */}
-            <CampoImagem
-              key={`${modalAberto}-${editando?.id ?? 'novo'}`}
-              textoAlternativo={`Foto de ${nomeDigitado?.trim() || 'animal'}`}
-              onEnviandoChange={setEnviandoFoto}
-            />
+          <Form.Item noStyle dependencies={['nome']}>
+            {({ getFieldValue }) => (
+              <Form.Item label="Foto" name="fotoUrl">
+                <CampoImagem
+                  key={`${modalAberto}-${editando?.id ?? 'novo'}`}
+                  textoAlternativo={`Foto de ${(getFieldValue('nome') as string | undefined)?.trim() || 'animal'}`}
+                  onEnviandoChange={setEnviandoFoto}
+                />
+              </Form.Item>
+            )}
           </Form.Item>
 
           <Form.Item
