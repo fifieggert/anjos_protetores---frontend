@@ -178,7 +178,7 @@ function CampoImagem({ value, onChange, id, textoAlternativo, disabled, onEnvian
       </Flex>
 
       <Typography.Text id={idDica} type="secondary" style={{ fontSize: 12 }}>
-        JPG, PNG ou WebP, com até 5 MB.
+        JPG, PNG ou WebP, com até 10 MB.
       </Typography.Text>
 
       {erro && (
