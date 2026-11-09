@@ -1,7 +1,6 @@
 import { formatarTelefone } from '../../utils/texto'
 
 // Dados de contato exibidos na página pública. Itens vazios não aparecem.
-// TODO: preencher com os dados reais do abrigo antes de publicar.
 
 // Somente dígitos, com 55 e DDD (ex.: 5547999999999). Vem de VITE_WHATSAPP_ABRIGO no .env.
 function whatsappDoAmbiente() {
@@ -12,14 +11,10 @@ function whatsappDoAmbiente() {
 export const dadosAbrigo = {
   nome: 'Anjos Protetores',
   whatsapp: whatsappDoAmbiente(),
-  // TODO: e-mail de contato, ex.: 'contato@anjosprotetores.org.br'
-  email: '',
-  // TODO: endereço ou cidade, ex.: 'Rua Exemplo, 123 - Cidade/UF'
-  endereco: '',
-  // TODO: link completo do perfil, ex.: 'https://instagram.com/anjosprotetores'
-  instagram: '',
-  // TODO: link completo da página, ex.: 'https://facebook.com/anjosprotetores'
-  facebook: '',
+  email: 'abrigoprotetoresanjos@gmail.com',
+  endereco: 'R. Cel. Oliveira, São José do Acaraí, São Francisco do Sul - SC, 89249-000',
+  instagram: 'https://instagram.com/anjoseprotetoressfs',
+  facebook: 'https://www.facebook.com/share/1FTTw5ChMj/',
 }
 
 export const MENSAGEM_DOACAO = 'Olá! Quero fazer uma doação para o Anjos Protetores.'
