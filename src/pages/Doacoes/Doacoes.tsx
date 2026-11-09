@@ -352,7 +352,7 @@ function Doacoes() {
                 {item.quantidadeAtual}
               </Typography.Text>
               <Typography.Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
-                {item.quantidadeMinima > 0 ? `Qtd. mínimo: ${item.quantidadeMinima}` : 'sem mínimo'}
+                {item.quantidadeMinima > 0 ? `Qtd. mínima: ${item.quantidadeMinima}` : 'sem mínimo'}
               </Typography.Text>
             </Flex>
             {item.quantidadeMinima > 0 && (

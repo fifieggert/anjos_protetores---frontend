@@ -43,10 +43,10 @@ describe('carregamento da tela', () => {
     expect(carregando()).not.toBeInTheDocument()
   })
 
-  it('mostra a quantidade mínima de cada item com o rótulo "Qtd. mínimo"', async () => {
+  it('mostra a quantidade mínima de cada item com o rótulo "Qtd. mínima"', async () => {
     renderComAuth(<Doacoes />)
 
-    expect(await screen.findByText('Qtd. mínimo: 2')).toBeInTheDocument()
+    expect(await screen.findByText('Qtd. mínima: 2')).toBeInTheDocument()
     expect(screen.queryByText(/mín\./)).not.toBeInTheDocument()
   })
 
