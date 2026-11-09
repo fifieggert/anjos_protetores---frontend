@@ -43,6 +43,13 @@ describe('carregamento da tela', () => {
     expect(carregando()).not.toBeInTheDocument()
   })
 
+  it('mostra a quantidade mínima de cada item com o rótulo "Qtd. mínimo"', async () => {
+    renderComAuth(<Doacoes />)
+
+    expect(await screen.findByText('Qtd. mínimo: 2')).toBeInTheDocument()
+    expect(screen.queryByText(/mín\./)).not.toBeInTheDocument()
+  })
+
   it('o voluntário não busca as saídas, que são só da coordenação', async () => {
     salvarSessao(tokenDoPerfil('VOLUNTARIO'), 'Bia')
 
