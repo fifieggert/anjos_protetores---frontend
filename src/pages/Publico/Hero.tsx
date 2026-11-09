@@ -1,6 +1,9 @@
-import { Button, Col, Flex, Row, Typography } from 'antd'
+import { Button, Flex, Typography } from 'antd'
 import { HeartFilled, HeartOutlined, WhatsAppOutlined } from '@ant-design/icons'
-import imagemHero from '../../assets/hero-adocao.jpg'
+// Ilustração com fundo transparente, gerada a partir de hero-adocao.png (o original tinha o
+// xadrez de "transparência" pintado na imagem). Duas larguras para o navegador escolher.
+import imagemHero from '../../assets/hero-adocao-1535.webp'
+import imagemHeroPequena from '../../assets/hero-adocao-768.webp'
 import { cores, comOpacidade } from '../../theme/cores'
 import { linkWhatsApp, MENSAGEM_DOACAO } from './dadosAbrigo'
 import IconePatinha from './IconePatinha'
@@ -33,74 +36,72 @@ function Hero({ animaisDisponiveis }: HeroProps) {
       />
 
       <div className="pub-container pub-hero-conteudo">
-        <Row gutter={[48, 48]} align="middle">
-          <Col xs={24} lg={12}>
-            <span className="pub-selo">
-              <HeartFilled style={{ color: cores.teal }} aria-hidden />
-              Adoção responsável
-            </span>
-            <Typography.Title level={1} id="titulo-hero" className="pub-hero-titulo">
-              Encontre um novo <span className="pub-destaque">melhor amigo</span>
-            </Typography.Title>
-            <Typography.Paragraph style={{ fontSize: 18, color: cores.textoSecundario, maxWidth: 520 }}>
-              Resgatamos, cuidamos e encontramos lares cheios de carinho para cães e gatos. Conheça quem está esperando
-              por uma família.
-            </Typography.Paragraph>
-            <Flex wrap gap={12} style={{ marginTop: 24 }}>
-              <Button type="primary" size="large" icon={<HeartOutlined />} onClick={() => rolarPara('animais')}>
-                Quero adotar
-              </Button>
-              {whatsapp ? (
-                <Button
-                  size="large"
-                  icon={<WhatsAppOutlined />}
-                  href={whatsapp}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Quero doar
-                </Button>
-              ) : (
-                <Button size="large" onClick={() => rolarPara('doacoes')}>
-                  Quero doar
-                </Button>
-              )}
-            </Flex>
-          </Col>
+        <span className="pub-selo">
+          <HeartFilled style={{ color: cores.teal }} aria-hidden />
+          Adoção responsável
+        </span>
+        <Typography.Title level={1} id="titulo-hero" className="pub-hero-titulo">
+          Encontre um novo <span className="pub-destaque">melhor amigo</span>
+        </Typography.Title>
+        <Typography.Paragraph className="pub-hero-subtitulo">
+          Resgatamos, cuidamos e encontramos lares cheios de carinho para cães e gatos. Conheça quem está esperando por
+          uma família.
+        </Typography.Paragraph>
+        <Flex wrap gap={12} justify="center" style={{ marginTop: 24 }}>
+          <Button type="primary" size="large" icon={<HeartOutlined />} onClick={() => rolarPara('animais')}>
+            Quero adotar
+          </Button>
+          {whatsapp ? (
+            <Button size="large" icon={<WhatsAppOutlined />} href={whatsapp} target="_blank" rel="noopener noreferrer">
+              Quero doar
+            </Button>
+          ) : (
+            <Button size="large" onClick={() => rolarPara('doacoes')}>
+              Quero doar
+            </Button>
+          )}
+        </Flex>
 
-          <Col xs={24} lg={12}>
-            <div className="pub-hero-moldura">
-              <div className="pub-hero-imagem">
-                <img src={imagemHero} alt="Vários cachorros de raças e tamanhos diferentes reunidos, olhando para a câmera" />
+        <div className="pub-hero-moldura">
+          {/* imagem principal da página: carrega já, com prioridade, e com tamanho reservado */}
+          <img
+            className="pub-hero-ilustracao"
+            src={imagemHero}
+            srcSet={`${imagemHeroPequena} 768w, ${imagemHero} 1535w`}
+            sizes="(max-width: 932px) calc(100vw - 32px), 900px"
+            width={1535}
+            height={1025}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            alt="Cães de várias raças e tamanhos sentados juntos"
+          />
+          {animaisDisponiveis !== null && animaisDisponiveis > 0 && (
+            <div className="pub-selo-flutuante">
+              <Flex
+                align="center"
+                justify="center"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  color: cores.teal,
+                  background: comOpacidade(cores.teal, 0.15),
+                }}
+              >
+                <IconePatinha tamanho={24} />
+              </Flex>
+              <div style={{ lineHeight: 1.2, textAlign: 'left' }}>
+                <Typography.Text strong style={{ display: 'block', fontSize: 18 }}>
+                  {animaisDisponiveis.toLocaleString('pt-BR')}
+                </Typography.Text>
+                <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                  {animaisDisponiveis === 1 ? 'amigo disponível' : 'amigos disponíveis'}
+                </Typography.Text>
               </div>
-              {animaisDisponiveis !== null && animaisDisponiveis > 0 && (
-                <div className="pub-selo-flutuante">
-                  <Flex
-                    align="center"
-                    justify="center"
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      color: cores.teal,
-                      background: comOpacidade(cores.teal, 0.15),
-                    }}
-                  >
-                    <IconePatinha tamanho={24} />
-                  </Flex>
-                  <div style={{ lineHeight: 1.2 }}>
-                    <Typography.Text strong style={{ display: 'block', fontSize: 18 }}>
-                      {animaisDisponiveis.toLocaleString('pt-BR')}
-                    </Typography.Text>
-                    <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-                      {animaisDisponiveis === 1 ? 'amigo disponível' : 'amigos disponíveis'}
-                    </Typography.Text>
-                  </div>
-                </div>
-              )}
             </div>
-          </Col>
-        </Row>
+          )}
+        </div>
       </div>
     </section>
   )

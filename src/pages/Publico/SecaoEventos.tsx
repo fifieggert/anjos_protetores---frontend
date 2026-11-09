@@ -6,20 +6,27 @@ import { listarEventosPublicos } from '../../services/publico'
 import { cores } from '../../theme/cores'
 import type { EventoPublico } from '../../types/publico'
 import { diaDaApi, diaDaSemana, mesAbreviado, textoHorario } from '../../utils/datas'
+import { urlImagem } from '../../utils/imagem'
+
+// Seta na ponta do carrossel: aria-disabled em vez de disabled, porque um botão desabilitado
+// perde o foco e o teclado deixaria de mover o carrossel. O clique não faz nada (mover limita).
+const ESTILO_SETA_NO_LIMITE: CSSProperties = { opacity: 0.45, cursor: 'not-allowed' }
 
 function CartaoEvento({ evento }: { evento: EventoPublico }) {
   const [imagemFalhou, setImagemFalhou] = useState(false)
   const dia = diaDaApi(evento.data)
+  // caminho do upload (/api/imagens/...) ou link externo http(s)
+  const imagem = urlImagem(evento.imagemUrl)
 
   return (
     <Card
       style={{ overflow: 'hidden' }}
       styles={{ body: { padding: 20 } }}
       cover={
-        evento.imagemUrl && !imagemFalhou ? (
+        imagem && !imagemFalhou ? (
           <img
             className="pub-capa"
-            src={evento.imagemUrl}
+            src={imagem}
             alt={`Imagem do evento ${evento.titulo}`}
             loading="lazy"
             onError={() => setImagemFalhou(true)}
@@ -106,7 +113,7 @@ function SecaoEventos() {
     setInicio(Math.max(0, Math.min(ultimoInicio, atual + passo)))
   }
 
-  function aoTeclar(evento: KeyboardEvent<HTMLDivElement>) {
+  function aoTeclar(evento: KeyboardEvent<HTMLElement>) {
     if (evento.key === 'ArrowLeft') {
       evento.preventDefault()
       mover(-1)
@@ -154,8 +161,6 @@ function SecaoEventos() {
         role="region"
         aria-roledescription="carrossel"
         aria-label="Próximos eventos"
-        tabIndex={temSetas ? 0 : undefined}
-        onKeyDown={temSetas ? aoTeclar : undefined}
       >
         <div className="pub-carrossel-janela">
           <div
@@ -194,8 +199,10 @@ function SecaoEventos() {
               size="large"
               icon={<LeftOutlined />}
               aria-label="Eventos anteriores"
-              disabled={atual === 0}
+              aria-disabled={atual === 0}
+              style={atual === 0 ? ESTILO_SETA_NO_LIMITE : undefined}
               onClick={() => mover(-1)}
+              onKeyDown={aoTeclar}
             />
             <Typography.Text type="secondary" aria-live="polite">
               {atual + 1}–{fim} de {eventos.length}
@@ -205,8 +212,10 @@ function SecaoEventos() {
               size="large"
               icon={<RightOutlined />}
               aria-label="Próximos eventos"
-              disabled={atual >= ultimoInicio}
+              aria-disabled={atual >= ultimoInicio}
+              style={atual >= ultimoInicio ? ESTILO_SETA_NO_LIMITE : undefined}
               onClick={() => mover(1)}
+              onKeyDown={aoTeclar}
             />
           </Flex>
         )}

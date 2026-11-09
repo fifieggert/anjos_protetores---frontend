@@ -165,6 +165,9 @@ function Doacoes() {
         if (resSaidas.status === 'fulfilled') setSaidas(Array.isArray(resSaidas.value) ? resSaidas.value : [])
         else message.error(mensagemDeErro(resSaidas.reason, 'Não foi possível carregar as saídas.'))
       })
+      .catch((e: unknown) => {
+        if (ativo) message.error(mensagemDeErro(e, 'Não foi possível carregar os dados do estoque.'))
+      })
       .finally(() => {
         if (ativo) setCarregando(false)
       })
@@ -348,8 +351,8 @@ function Doacoes() {
               <Typography.Text strong style={{ fontSize: 16 }}>
                 {item.quantidadeAtual}
               </Typography.Text>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {item.quantidadeMinima > 0 ? `mín. ${item.quantidadeMinima}` : 'sem mínimo'}
+              <Typography.Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                {item.quantidadeMinima > 0 ? `Qtd. mínima: ${item.quantidadeMinima}` : 'sem mínimo'}
               </Typography.Text>
             </Flex>
             {item.quantidadeMinima > 0 && (
