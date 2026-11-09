@@ -3,12 +3,12 @@ import { dadosDoErro, statusDoErro } from '../../utils/erros'
 
 // Mesmas regras do backend (POST /api/imagens), conferidas ANTES de enviar: assim um arquivo
 // errado nem sai do navegador. O backend confere de novo pelo conteúdo do arquivo.
-export const TAMANHO_MAXIMO = 5 * 1024 * 1024 // 5 MB
+export const TAMANHO_MAXIMO = 10 * 1024 * 1024 // 10 MB
 export const TIPOS_ACEITOS = ['image/jpeg', 'image/png', 'image/webp'] as const
 const EXTENSOES_ACEITAS = /\.(jpe?g|png|webp)$/i
 
 export const MENSAGEM_TIPO = 'Formato não aceito. Escolha uma foto JPG, PNG ou WebP.'
-export const MENSAGEM_TAMANHO = 'A foto deve ter no máximo 5 MB.'
+export const MENSAGEM_TAMANHO = 'A foto deve ter no máximo 10 MB.'
 
 // null = pode enviar; texto = motivo da recusa.
 export function validarArquivoImagem(arquivo: File): string | null {
@@ -48,7 +48,7 @@ export function mensagemErroUpload(erro: unknown): string {
     case 413:
       // o servidor diferencia arquivo grande de imagem com dimensões enormes; o proxy pode
       // responder 413 sem corpo
-      return mensagemDoServidor(erro) ?? 'A foto é grande demais. Escolha um arquivo de até 5 MB.'
+      return mensagemDoServidor(erro) ?? 'A foto é grande demais. Escolha um arquivo de até 10 MB.'
     case 415:
       return mensagemDoServidor(erro) ?? 'Não foi possível usar este arquivo. Escolha uma foto JPG, PNG ou WebP.'
     case 429:

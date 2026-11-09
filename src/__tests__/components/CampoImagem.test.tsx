@@ -68,7 +68,7 @@ describe('CampoImagem', () => {
 
     const botao = screen.getByRole('button', { name: 'Enviar foto' })
     expect(botao).toHaveAttribute('id', 'fotoUrl')
-    expect(botao).toHaveAccessibleDescription('JPG, PNG ou WebP, com até 5 MB.')
+    expect(botao).toHaveAccessibleDescription('JPG, PNG ou WebP, com até 10 MB.')
     expect(screen.queryByRole('img', { name: 'Foto de Rex' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Remover foto' })).not.toBeInTheDocument()
   })
@@ -119,18 +119,18 @@ describe('CampoImagem', () => {
     expect(alerta()).toHaveTextContent('Formato não aceito. Escolha uma foto JPG, PNG ou WebP.')
   })
 
-  it('arquivo acima de 5 MB não chama a API; exatamente 5 MB pode', async () => {
+  it('arquivo acima de 10 MB não chama a API; exatamente 10 MB pode', async () => {
     enviar.mockResolvedValue(URL_NOVA)
     renderComAntd(<Campo />)
 
-    await usuario().upload(entrada(), arquivo('grande.jpg', 'image/jpeg', 5 * 1024 * 1024 + 1))
+    await usuario().upload(entrada(), arquivo('grande.jpg', 'image/jpeg', 10 * 1024 * 1024 + 1))
     expect(enviar).not.toHaveBeenCalled()
-    expect(alerta()).toHaveTextContent('A foto deve ter no máximo 5 MB.')
+    expect(alerta()).toHaveTextContent('A foto deve ter no máximo 10 MB.')
     expect(screen.getByRole('button', { name: 'Enviar foto' })).toHaveAccessibleDescription(
-      'JPG, PNG ou WebP, com até 5 MB. A foto deve ter no máximo 5 MB.',
+      'JPG, PNG ou WebP, com até 10 MB. A foto deve ter no máximo 10 MB.',
     )
 
-    await usuario().upload(entrada(), arquivo('limite.jpg', 'image/jpeg', 5 * 1024 * 1024))
+    await usuario().upload(entrada(), arquivo('limite.jpg', 'image/jpeg', 10 * 1024 * 1024))
     expect(enviar).toHaveBeenCalledOnce()
     await waitFor(() => expect(alerta()).not.toBeInTheDocument())
   })
@@ -147,11 +147,11 @@ describe('CampoImagem', () => {
   it.each([
     ['401', erroAxios(401, { error: 'Token inválido ou expirado.' }), 'Sua sessão expirou. Entre novamente para enviar a foto.'],
     ['403', erroAxios(403), 'Sua conta não tem permissão para enviar fotos. Entre novamente ou fale com a coordenação.'],
-    ['413 do proxy (sem corpo)', erroAxios(413), 'A foto é grande demais. Escolha um arquivo de até 5 MB.'],
+    ['413 do proxy (sem corpo)', erroAxios(413), 'A foto é grande demais. Escolha um arquivo de até 10 MB.'],
     [
       '413 da API (dimensões)',
-      erroAxios(413, { error: 'A imagem tem dimensões grandes demais (máximo de 50 megapixels).' }),
-      'A imagem tem dimensões grandes demais (máximo de 50 megapixels).',
+      erroAxios(413, { error: 'A imagem tem dimensões grandes demais (máximo de 25 megapixels).' }),
+      'A imagem tem dimensões grandes demais (máximo de 25 megapixels).',
     ],
     ['415 sem corpo', erroAxios(415), 'Não foi possível usar este arquivo. Escolha uma foto JPG, PNG ou WebP.'],
     [
