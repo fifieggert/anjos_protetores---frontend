@@ -1,45 +1,80 @@
-# React + TypeScript + Vite
+# Anjos Protetores: interface web (frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Interface web do **Anjos Protetores**, sistema de gestão de um abrigo de animais. Tem duas áreas: o **site público** (animais disponíveis, eventos, como adotar e contato) e o **sistema interno** da equipe (animais, doações e estoque, adoções, eventos, usuários e painel). Projeto da disciplina de Portfólio (Engenharia de Software, Católica SC).
 
-Currently, two official plugins are available:
+- **Sistema em produção:** https://abrigoanjosprotetores.com.br
+- **Backend (API):** https://github.com/fifieggert/anjos_protetores---backend
+- **Documentação completa (Wiki):** aba *Wiki* deste repositório
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+React 19 · TypeScript · Vite · Ant Design · React Router · Axios · Vitest e Testing Library. Em produção é servido por Nginx dentro de um container Docker, atrás do Caddy.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Telas
 
-## Expanding the Oxlint configuration
+| Rota | Tela | Acesso |
+|---|---|---|
+| `/` | Site público | Todos |
+| `/login` | Login | Todos |
+| `/dashboard` | Painel da coordenação | ADMIN |
+| `/animais` | Cadastro e edição de animais, com foto | ADMIN e VOLUNTARIO |
+| `/doacoes` | Doações, saídas e itens de estoque | ADMIN e VOLUNTARIO |
+| `/adocoes` | Solicitações de adoção e termo em PDF | ADMIN |
+| `/eventos` | Eventos do abrigo | ADMIN |
+| `/usuarios` | Gestão de usuários | ADMIN |
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+O frontend esconde as telas por perfil, mas quem de fato bloqueia o acesso é a API.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## Estrutura
+
+```
+src/
+  pages/        uma pasta por tela (Publico, Animais, Doacoes, Adocoes, Eventos, Usuarios, Dashboard, Login)
+  components/   componentes compartilhados (layout, rota protegida, campo de imagem)
+  services/     chamadas à API (um arquivo por recurso, sobre o Axios)
+  contexts/     sessão do usuário (AuthContext)
+  types/        tipos TypeScript
+  utils/        funções auxiliares
+  theme/        tema e cores
+  __tests__/    testes
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Rodar localmente
+
+Pré-requisitos: Node.js na versão do `.nvmrc` e a [API](https://github.com/fifieggert/anjos_protetores---backend) rodando em `http://localhost:4000`.
+
+```bash
+npm ci
+cp .env.example .env     # ajuste se necessário
+npm run dev              # http://localhost:5173
+```
+
+| Variável | Para que serve |
+|---|---|
+| `VITE_API_URL` | Endereço da API (`http://localhost:4000/api` em desenvolvimento; `/api` em produção) |
+| `VITE_WHATSAPP_ABRIGO` | WhatsApp do abrigo, só dígitos com 55 e DDD. Sem ela, os botões de WhatsApp somem. É lida no **build**. |
+
+Os dados de contato do rodapé (e-mail, endereço, redes sociais) ficam em `src/pages/Publico/dadosAbrigo.ts`.
+
+## Scripts
+
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Checa os tipos e gera `dist/` |
+| `npm run lint` | oxlint |
+| `npm test` | Testes |
+| `npm run test:coverage` | Testes com cobertura (mínimo de 25% no CI) |
+| `npx tsc -p tsconfig.test.json` | Checa os tipos dos testes |
 
 ## Testes
 
-Testes com [Vitest](https://vitest.dev) e [Testing Library](https://testing-library.com), na pasta `src/__tests__`. Só as bordas são falsas (axios ou services): nenhum teste acessa a rede nem lê o `.env`.
+Vitest e Testing Library, na pasta `src/__tests__`. Só as bordas são falsas (Axios e services): nenhum teste acessa a rede nem lê o `.env`. O CI roda o lint, os testes com cobertura e o build, e envia a cobertura ao SonarCloud.
 
-```bash
-npm test                 # roda todos os testes
-npm run test:coverage    # roda com cobertura (resumo no terminal e coverage/lcov.info)
-npx vitest src/__tests__/pages/Login.test.tsx   # um arquivo, em modo watch
-npx tsc -p tsconfig.test.json                   # checa os tipos dos testes (o build não checa)
-```
+## Deploy
 
-O `test:coverage` falha abaixo do mínimo de 25% de cobertura. O CI roda esse comando antes do build e envia o `coverage/lcov.info` para o SonarCloud.
+Merge na `main` dispara o workflow **Deploy**: constrói a imagem, envia ao ECR e atualiza a EC2 por SSM (a mesma infraestrutura do backend). Detalhes em [`docs/deploy-frontend.md`](docs/deploy-frontend.md).
+
+## Autoria
+
+Sophia Eggert Freire da Rocha, Engenharia de Software, Católica SC.
